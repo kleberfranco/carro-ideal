@@ -1,0 +1,29 @@
+{{ define "content" }}
+<h1>Login</h1>
+
+<div id="login-error" class="alert" style="display: none;"></div>
+
+<form id="login-form" method="POST">
+    <div class="form-group">
+        <label for="email">E-mail</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="E-mail" required>
+        <div class="invalid-feedback"></div>
+    </div>
+
+    <div class="form-group">
+        <label for="password">Senha</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="Senha" required>
+        <div class="invalid-feedback"></div>
+    </div>
+
+    <button type="submit" id="login-submit" class="btn btn-primary">Entrar</button>
+</form>
+
+<p>
+    <a href="/register">Criar conta</a>
+    <a href="/">Voltar</a>
+</p>
+
+<script src="/static/js/web/login.js"></script>
+{{ end }}
+
