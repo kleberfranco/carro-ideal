@@ -90,17 +90,24 @@ type RecommendationService struct {
 	questionnaire      *QuestionnaireService
 	vehicles           *VehicleService
 	recommendationRepo repository.RecommendationRepository
+	ai                 *AIService
 }
 
 func NewRecommendationService(
 	questionnaire *QuestionnaireService,
 	vehicles *VehicleService,
 	recommendationRepo repository.RecommendationRepository,
+	aiSvc ...*AIService,
 ) *RecommendationService {
+	var ai *AIService
+	if len(aiSvc) > 0 {
+		ai = aiSvc[0]
+	}
 	return &RecommendationService{
 		questionnaire:      questionnaire,
 		vehicles:           vehicles,
 		recommendationRepo: recommendationRepo,
+		ai:                 ai,
 	}
 }
 
@@ -118,6 +125,84 @@ func (s *RecommendationService) Generate(ctx context.Context, userID int64, answ
 		return nil, ErrNoVehicles
 	}
 
+	// Try ChatGPT first; fall back to scoring algorithm on any error.
+	if s.ai != nil {
+		questions, qErr := s.questionnaire.GetActive(ctx)
+		if qErr == nil {
+			if rec, aErr := s.generateWithAI(ctx, userID, answers, questions, vehicles); aErr == nil {
+				if err := s.recommendationRepo.Create(ctx, rec, answers); err != nil {
+					return nil, err
+				}
+				return rec, nil
+			}
+		}
+	}
+
+	return s.generateWithScoring(ctx, userID, answers, userProfile, vehicles)
+}
+
+func (s *RecommendationService) generateWithAI(
+	ctx context.Context,
+	userID int64,
+	answers []models.SubmittedAnswer,
+	questions []models.Question,
+	vehicles []models.Vehicle,
+) (*models.Recommendation, error) {
+	aiRec, err := s.ai.Recommend(ctx, answers, questions, vehicles)
+	if err != nil {
+		return nil, err
+	}
+
+	// Build vehicle lookup map.
+	vehicleByID := make(map[int64]models.Vehicle, len(vehicles))
+	for _, v := range vehicles {
+		vehicleByID[v.ID] = v
+	}
+
+	items := make([]models.RecommendationItem, 0, len(aiRec.Items))
+	for _, item := range aiRec.Items {
+		v, ok := vehicleByID[item.VehicleID]
+		if !ok {
+			continue
+		}
+		// Keep the scoring data alongside AI reason.
+		score, matches := scoreVehicle(
+			map[string]float64{},
+			v.MatchProfile,
+		)
+		_ = score
+		items = append(items, models.RecommendationItem{
+			Vehicle:         v,
+			Rank:            item.Rank,
+			Score:           0,
+			Reason:          item.Reason,
+			MatchedCriteria: matches,
+		})
+	}
+	if len(items) == 0 {
+		return nil, fmt.Errorf("ai returned no recognizable vehicle IDs")
+	}
+	// Ensure rank is correct even if AI returned them out of order.
+	sort.SliceStable(items, func(i, j int) bool { return items[i].Rank < items[j].Rank })
+	for i := range items {
+		items[i].Rank = i + 1
+	}
+
+	return &models.Recommendation{
+		UserID:    userID,
+		Summary:   "Recomendação gerada por Inteligência Artificial.",
+		AISummary: aiRec.Summary,
+		Items:     items,
+	}, nil
+}
+
+func (s *RecommendationService) generateWithScoring(
+	ctx context.Context,
+	userID int64,
+	answers []models.SubmittedAnswer,
+	userProfile map[string]float64,
+	vehicles []models.Vehicle,
+) (*models.Recommendation, error) {
 	items := make([]models.RecommendationItem, 0, len(vehicles))
 	for _, vehicle := range vehicles {
 		score, matches := scoreVehicle(userProfile, vehicle.MatchProfile)

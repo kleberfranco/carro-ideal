@@ -36,10 +36,18 @@
 <section id="results-view" class="d-none">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <p class="eyebrow mb-1">Compatibilidade calculada</p>
+            <p class="eyebrow mb-1" id="results-eyebrow">Recomendação gerada por IA</p>
             <h2 class="text-start mb-0">Seus carros recomendados</h2>
         </div>
         <button class="btn btn-outline-primary w-auto" data-view="questionnaire">Refazer</button>
+    </div>
+    <div id="ai-summary-block" class="d-none mb-4">
+        <div class="card border-0 bg-body-secondary">
+            <div class="card-body">
+                <p class="eyebrow mb-1"><span class="badge bg-primary me-1">IA</span> Análise do seu perfil</p>
+                <p class="mb-0" id="ai-summary-text"></p>
+            </div>
+        </div>
     </div>
     <div class="comparison-toolbar mb-3">
         <span id="comparison-count">Selecione de 2 a 3 veículos para comparar.</span>

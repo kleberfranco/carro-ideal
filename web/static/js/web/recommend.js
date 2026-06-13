@@ -81,8 +81,23 @@ $(function () {
 
     function renderRecommendation(recommendation) {
         currentItems = recommendation.items || [];
+        const aiGenerated = !!recommendation.ai_summary;
+
+        // Show or hide AI summary block
+        if (aiGenerated) {
+            $("#results-eyebrow").html('<span class="badge bg-primary me-1">IA</span> Recomendação gerada por ChatGPT');
+            $("#ai-summary-text").text(recommendation.ai_summary);
+            $("#ai-summary-block").removeClass("d-none");
+        } else {
+            $("#results-eyebrow").text("Compatibilidade calculada");
+            $("#ai-summary-block").addClass("d-none");
+        }
+
         const cards = currentItems.map(function (item) {
             const vehicle = item.vehicle;
+            const scoreHtml = aiGenerated
+                ? `<div class="rank-ai-badge"><span class="badge bg-primary fs-6">#${item.rank}</span></div>`
+                : `<div class="score-ring">${Number(item.score).toFixed(0)}<small>%</small></div>`;
             return `
                 <div class="col-12">
                     <article class="vehicle-card">
@@ -94,7 +109,7 @@ $(function () {
                                     <h3>${escapeHtml(vehicle.brand)} ${escapeHtml(vehicle.model)}</h3>
                                     <p class="text-secondary mb-2">${escapeHtml(vehicle.version)} · ${vehicle.year}</p>
                                 </div>
-                                <div class="score-ring">${Number(item.score).toFixed(0)}<small>%</small></div>
+                                ${scoreHtml}
                             </div>
                             <p class="reason">${escapeHtml(item.reason)}</p>
                             <div class="vehicle-facts">

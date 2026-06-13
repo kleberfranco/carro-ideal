@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"carro-ideal/app/clients"
 	"carro-ideal/app/db"
 	"carro-ideal/app/internal/admin"
 	"carro-ideal/app/internal/api"
@@ -51,8 +52,14 @@ func main() {
 	authService := service.NewAuthService(sessionRepo)
 	questionnaireService := service.NewQuestionnaireService(questionRepo, catalogCache)
 	vehicleService := service.NewVehicleService(vehicleRepo, catalogCache)
-	recommendationService := service.NewRecommendationService(questionnaireService, vehicleService, recommendationRepo)
 	adminService := service.NewAdminService(adminRepo, catalogCache)
+
+	var aiService *service.AIService
+	if cfg.OpenAIAPIKey != "" {
+		openAIClient := clients.NewOpenAIClient(cfg.OpenAIAPIKey, cfg.OpenAIModel, cfg.OpenAITimeoutSecs)
+		aiService = service.NewAIService(openAIClient)
+	}
+	recommendationService := service.NewRecommendationService(questionnaireService, vehicleService, recommendationRepo, aiService)
 	secureCookie := strings.EqualFold(cfg.Environment, "production")
 	logger := newLogger(cfg.LogLevel)
 

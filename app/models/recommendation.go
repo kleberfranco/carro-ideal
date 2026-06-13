@@ -6,6 +6,7 @@ type Recommendation struct {
 	ID        int64                `json:"id"`
 	UserID    int64                `json:"user_id"`
 	Summary   string               `json:"summary"`
+	AISummary string               `json:"ai_summary,omitempty"`
 	Items     []RecommendationItem `json:"items,omitempty"`
 	ItemCount int                  `json:"item_count,omitempty"`
 	CreatedAt time.Time            `json:"created_at"`

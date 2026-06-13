@@ -19,6 +19,8 @@ const (
 	defaultDBName         = "carro_ideal"
 	defaultDBMaxOpenConns = 25
 	defaultDBMaxIdleConns = 5
+	defaultOpenAIModel    = "gpt-4o-mini"
+	defaultOpenAITimeout  = 15
 )
 
 type Config struct {
@@ -37,8 +39,11 @@ type Config struct {
 	RateLimit      int
 	RateWindow     int
 	CacheTTL       int
-	TLSCertFile    string
-	TLSKeyFile     string
+	TLSCertFile        string
+	TLSKeyFile         string
+	OpenAIAPIKey       string
+	OpenAIModel        string
+	OpenAITimeoutSecs  int
 }
 
 func Load() (*Config, error) {
@@ -63,8 +68,11 @@ func Load() (*Config, error) {
 		RateLimit:      getEnvInt("RATE_LIMIT_REQUESTS", 120),
 		RateWindow:     getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60),
 		CacheTTL:       getEnvInt("CACHE_TTL_SECONDS", 60),
-		TLSCertFile:    getEnv("TLS_CERT_FILE", ""),
-		TLSKeyFile:     getEnv("TLS_KEY_FILE", ""),
+		TLSCertFile:       getEnv("TLS_CERT_FILE", ""),
+		TLSKeyFile:        getEnv("TLS_KEY_FILE", ""),
+		OpenAIAPIKey:      getEnv("OPENAI_API_KEY", ""),
+		OpenAIModel:       getEnv("OPENAI_MODEL", defaultOpenAIModel),
+		OpenAITimeoutSecs: getEnvInt("OPENAI_TIMEOUT_SECONDS", defaultOpenAITimeout),
 	}
 
 	if cfg.SessionSecret == "" {

@@ -37,10 +37,10 @@ func (r *recommendationRepository) Create(ctx context.Context, recommendation *m
 		return err
 	}
 	err = tx.QueryRowContext(ctx, `
-		INSERT INTO recommendations (user_id, answers_snapshot, summary)
-		VALUES ($1, $2, $3)
+		INSERT INTO recommendations (user_id, answers_snapshot, summary, ai_summary)
+		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at`,
-		recommendation.UserID, snapshot, recommendation.Summary,
+		recommendation.UserID, snapshot, recommendation.Summary, recommendation.AISummary,
 	).Scan(&recommendation.ID, &recommendation.CreatedAt)
 	if err != nil {
 		return err
@@ -82,7 +82,7 @@ func (r *recommendationRepository) GetByUser(ctx context.Context, userID int64, 
 	}
 
 	rows, err := r.db.QueryContext(ctx, `
-		SELECT r.id, r.user_id, r.summary, r.created_at, COUNT(i.id)
+		SELECT r.id, r.user_id, r.summary, r.ai_summary, r.created_at, COUNT(i.id)
 		FROM recommendations r
 		LEFT JOIN recommendation_items i ON i.recommendation_id=r.id
 		WHERE r.user_id=$1
@@ -101,6 +101,7 @@ func (r *recommendationRepository) GetByUser(ctx context.Context, userID int64, 
 			&recommendation.ID,
 			&recommendation.UserID,
 			&recommendation.Summary,
+			&recommendation.AISummary,
 			&recommendation.CreatedAt,
 			&recommendation.ItemCount,
 		); err != nil {
@@ -114,9 +115,9 @@ func (r *recommendationRepository) GetByUser(ctx context.Context, userID int64, 
 func (r *recommendationRepository) GetByID(ctx context.Context, id, userID int64) (*models.Recommendation, error) {
 	recommendation := &models.Recommendation{}
 	err := r.db.QueryRowContext(ctx, `
-		SELECT id, user_id, summary, created_at
+		SELECT id, user_id, summary, ai_summary, created_at
 		FROM recommendations WHERE id=$1 AND user_id=$2`, id, userID,
-	).Scan(&recommendation.ID, &recommendation.UserID, &recommendation.Summary, &recommendation.CreatedAt)
+	).Scan(&recommendation.ID, &recommendation.UserID, &recommendation.Summary, &recommendation.AISummary, &recommendation.CreatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrRecommendationNotFound
 	}
