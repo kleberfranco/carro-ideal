@@ -24,6 +24,10 @@ services:
       RATE_LIMIT_REQUESTS: 120
       RATE_LIMIT_WINDOW_SECONDS: 60
       CACHE_TTL_SECONDS: 60
+      # ChatGPT (motor de recomendação do TCC). Sem a chave, cai no scoring.
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-15}
 
   db:
     image: postgres:15

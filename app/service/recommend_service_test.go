@@ -160,6 +160,100 @@ func makeRecommendationService(questions []models.Question, vehicles []models.Ve
 	return NewRecommendationService(qService, vService, recRepo)
 }
 
+func makeRecommendationServiceWithAI(questions []models.Question, vehicles []models.Vehicle, recRepo repository.RecommendationRepository, ai *AIService) *RecommendationService {
+	questionRepo := &fakeQuestionRepository{questions: questions}
+	vehicleRepo := &fakeVehicleRepository{vehicles: vehicles}
+	qService := NewQuestionnaireService(questionRepo)
+	vService := NewVehicleService(vehicleRepo)
+	return NewRecommendationService(qService, vService, recRepo, ai)
+}
+
+// aiTestFixture returns one question and two vehicles whose IDs (1, 2) match
+// the IDs referenced by validAIResponse in ai_service_test.go.
+func aiTestFixture() ([]models.Question, []models.Vehicle, []models.SubmittedAnswer) {
+	questions := []models.Question{
+		{ID: 1, Weight: 1, Options: []models.AnswerOption{
+			{ID: 10, QuestionID: 1, ScoreProfile: map[string]float64{"urban": 1}},
+		}},
+	}
+	vehicles := []models.Vehicle{
+		{ID: 1, Brand: "Toyota", Model: "Corolla", MatchProfile: map[string]float64{"urban": 1}},
+		{ID: 2, Brand: "VW", Model: "Gol", MatchProfile: map[string]float64{"offroad": 1}},
+	}
+	answers := []models.SubmittedAnswer{{QuestionID: 1, AnswerOptionID: 10}}
+	return questions, vehicles, answers
+}
+
+func TestGenerateUsesAIWhenAvailable(t *testing.T) {
+	questions, vehicles, answers := aiTestFixture()
+	recRepo := &fakeRecommendationRepository{}
+	ai := NewAIService(&fakeAIClient{response: validAIResponse})
+	service := makeRecommendationServiceWithAI(questions, vehicles, recRepo, ai)
+
+	rec, err := service.Generate(context.Background(), 7, answers)
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	if rec.AISummary == "" {
+		t.Fatal("Generate() with AI should populate AISummary")
+	}
+	if len(rec.Items) != 2 {
+		t.Fatalf("Generate() items = %d, want 2 from AI response", len(rec.Items))
+	}
+	if rec.Items[0].Vehicle.ID != 1 || rec.Items[0].Rank != 1 {
+		t.Fatalf("Generate() first item = vehicle %d rank %d, want vehicle 1 rank 1",
+			rec.Items[0].Vehicle.ID, rec.Items[0].Rank)
+	}
+	if recRepo.stored == nil {
+		t.Fatal("Generate() should persist the AI recommendation exactly once")
+	}
+}
+
+func TestGenerateFallsBackToScoringOnAIError(t *testing.T) {
+	questions, vehicles, answers := aiTestFixture()
+	recRepo := &fakeRecommendationRepository{}
+	ai := NewAIService(&fakeAIClient{err: errors.New("openai down")})
+	service := makeRecommendationServiceWithAI(questions, vehicles, recRepo, ai)
+
+	rec, err := service.Generate(context.Background(), 7, answers)
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	if rec.AISummary != "" {
+		t.Fatal("fallback to scoring should leave AISummary empty")
+	}
+	if len(rec.Items) == 0 {
+		t.Fatal("fallback should still produce scored items")
+	}
+	// Highest-scoring vehicle (urban match) must rank first.
+	if rec.Items[0].Vehicle.ID != 1 {
+		t.Fatalf("fallback first item = vehicle %d, want 1 (best score)", rec.Items[0].Vehicle.ID)
+	}
+	if recRepo.stored == nil {
+		t.Fatal("fallback recommendation should still be persisted")
+	}
+}
+
+func TestGenerateFallsBackWhenAIReturnsUnknownIDs(t *testing.T) {
+	questions, vehicles, answers := aiTestFixture()
+	// AI references vehicle IDs that aren't in the catalog.
+	unknownIDs := `{"summary":"x","items":[{"vehicle_id":999,"rank":1,"reason":"r"}]}`
+	recRepo := &fakeRecommendationRepository{}
+	ai := NewAIService(&fakeAIClient{response: unknownIDs})
+	service := makeRecommendationServiceWithAI(questions, vehicles, recRepo, ai)
+
+	rec, err := service.Generate(context.Background(), 7, answers)
+	if err != nil {
+		t.Fatalf("Generate() error = %v", err)
+	}
+	if rec.AISummary != "" {
+		t.Fatal("unknown AI IDs should fall back to scoring (no AISummary)")
+	}
+	if len(rec.Items) == 0 {
+		t.Fatal("fallback should produce scored items")
+	}
+}
+
 func TestRecommendationServiceGenerate(t *testing.T) {
 	questions := []models.Question{
 		{

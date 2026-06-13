@@ -62,6 +62,13 @@ func main() {
 	recommendationService := service.NewRecommendationService(questionnaireService, vehicleService, recommendationRepo, aiService)
 	secureCookie := strings.EqualFold(cfg.Environment, "production")
 	logger := newLogger(cfg.LogLevel)
+	slog.SetDefault(logger)
+
+	if aiService != nil {
+		logger.Info("motor de recomendação: ChatGPT", "model", cfg.OpenAIModel)
+	} else {
+		logger.Info("motor de recomendação: algoritmo de scoring (OPENAI_API_KEY ausente)")
+	}
 
 	webHandler := web.NewHandler(userService, authService, secureCookie)
 	apiHandler := api.NewHandler(

@@ -24,26 +24,26 @@ const (
 )
 
 type Config struct {
-	Environment    string
-	Port           string
-	DBHost         string
-	DBPort         string
-	DBUser         string
-	DBPassword     string
-	DBName         string
-	DBMaxOpenConns int
-	DBMaxIdleConns int
-	SessionSecret  string
-	LogLevel       string
-	AllowedOrigins []string
-	RateLimit      int
-	RateWindow     int
-	CacheTTL       int
-	TLSCertFile        string
-	TLSKeyFile         string
-	OpenAIAPIKey       string
-	OpenAIModel        string
-	OpenAITimeoutSecs  int
+	Environment       string
+	Port              string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	DBMaxOpenConns    int
+	DBMaxIdleConns    int
+	SessionSecret     string
+	LogLevel          string
+	AllowedOrigins    []string
+	RateLimit         int
+	RateWindow        int
+	CacheTTL          int
+	TLSCertFile       string
+	TLSKeyFile        string
+	OpenAIAPIKey      string
+	OpenAIModel       string
+	OpenAITimeoutSecs int
 }
 
 func Load() (*Config, error) {
@@ -53,21 +53,21 @@ func Load() (*Config, error) {
 
 	port := getEnv("PORT", defaultPort)
 	cfg := &Config{
-		Environment:    getEnv("ENVIRONMENT", defaultEnvironment),
-		Port:           port,
-		DBHost:         getEnv("DB_HOST", defaultDBHost),
-		DBPort:         getEnv("DB_PORT", defaultDBPort),
-		DBUser:         getEnv("DB_USER", defaultDBUser),
-		DBPassword:     getEnv("DB_PASSWORD", defaultDBPassword),
-		DBName:         getEnv("DB_NAME", defaultDBName),
-		DBMaxOpenConns: getEnvInt("DB_MAX_OPEN_CONNS", defaultDBMaxOpenConns),
-		DBMaxIdleConns: getEnvInt("DB_MAX_IDLE_CONNS", defaultDBMaxIdleConns),
-		SessionSecret:  getEnv("SESSION_SECRET", ""),
-		LogLevel:       getEnv("LOG_LEVEL", "info"),
-		AllowedOrigins: splitEnv("ALLOWED_ORIGINS"),
-		RateLimit:      getEnvInt("RATE_LIMIT_REQUESTS", 120),
-		RateWindow:     getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60),
-		CacheTTL:       getEnvInt("CACHE_TTL_SECONDS", 60),
+		Environment:       getEnv("ENVIRONMENT", defaultEnvironment),
+		Port:              port,
+		DBHost:            getEnv("DB_HOST", defaultDBHost),
+		DBPort:            getEnv("DB_PORT", defaultDBPort),
+		DBUser:            getEnv("DB_USER", defaultDBUser),
+		DBPassword:        getEnv("DB_PASSWORD", defaultDBPassword),
+		DBName:            getEnv("DB_NAME", defaultDBName),
+		DBMaxOpenConns:    getEnvInt("DB_MAX_OPEN_CONNS", defaultDBMaxOpenConns),
+		DBMaxIdleConns:    getEnvInt("DB_MAX_IDLE_CONNS", defaultDBMaxIdleConns),
+		SessionSecret:     getEnv("SESSION_SECRET", ""),
+		LogLevel:          getEnv("LOG_LEVEL", "info"),
+		AllowedOrigins:    splitEnv("ALLOWED_ORIGINS"),
+		RateLimit:         getEnvInt("RATE_LIMIT_REQUESTS", 120),
+		RateWindow:        getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60),
+		CacheTTL:          getEnvInt("CACHE_TTL_SECONDS", 60),
 		TLSCertFile:       getEnv("TLS_CERT_FILE", ""),
 		TLSKeyFile:        getEnv("TLS_KEY_FILE", ""),
 		OpenAIAPIKey:      getEnv("OPENAI_API_KEY", ""),

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"math"
 	"sort"
 	"strings"
@@ -125,35 +126,43 @@ func (s *RecommendationService) Generate(ctx context.Context, userID int64, answ
 		return nil, ErrNoVehicles
 	}
 
-	// Try ChatGPT first; fall back to scoring algorithm on any error.
-	if s.ai != nil {
-		questions, qErr := s.questionnaire.GetActive(ctx)
-		if qErr == nil {
-			if rec, aErr := s.generateWithAI(ctx, userID, answers, questions, vehicles); aErr == nil {
-				if err := s.recommendationRepo.Create(ctx, rec, answers); err != nil {
-					return nil, err
-				}
-				return rec, nil
-			}
-		}
+	// Try ChatGPT first; fall back to the scoring algorithm on any failure.
+	recommendation := s.recommendWithAI(ctx, userID, answers, vehicles)
+	if recommendation == nil {
+		recommendation = s.recommendWithScoring(userID, userProfile, vehicles)
 	}
 
-	return s.generateWithScoring(ctx, userID, answers, userProfile, vehicles)
+	if err := s.recommendationRepo.Create(ctx, recommendation, answers); err != nil {
+		return nil, err
+	}
+	return recommendation, nil
 }
 
-func (s *RecommendationService) generateWithAI(
+// recommendWithAI returns a ChatGPT-generated recommendation, or nil when the
+// AI engine is disabled or fails — in which case the caller falls back to
+// scoring. Every failure is logged so the fallback is observable.
+func (s *RecommendationService) recommendWithAI(
 	ctx context.Context,
 	userID int64,
 	answers []models.SubmittedAnswer,
-	questions []models.Question,
 	vehicles []models.Vehicle,
-) (*models.Recommendation, error) {
-	aiRec, err := s.ai.Recommend(ctx, answers, questions, vehicles)
-	if err != nil {
-		return nil, err
+) *models.Recommendation {
+	if s.ai == nil {
+		return nil
 	}
 
-	// Build vehicle lookup map.
+	questions, err := s.questionnaire.GetActive(ctx)
+	if err != nil {
+		slog.WarnContext(ctx, "IA indisponível: falha ao carregar perguntas, usando scoring", "error", err)
+		return nil
+	}
+
+	aiRec, err := s.ai.Recommend(ctx, answers, questions, vehicles)
+	if err != nil {
+		slog.WarnContext(ctx, "ChatGPT falhou, usando algoritmo de scoring", "error", err)
+		return nil
+	}
+
 	vehicleByID := make(map[int64]models.Vehicle, len(vehicles))
 	for _, v := range vehicles {
 		vehicleByID[v.ID] = v
@@ -165,44 +174,37 @@ func (s *RecommendationService) generateWithAI(
 		if !ok {
 			continue
 		}
-		// Keep the scoring data alongside AI reason.
-		score, matches := scoreVehicle(
-			map[string]float64{},
-			v.MatchProfile,
-		)
-		_ = score
 		items = append(items, models.RecommendationItem{
-			Vehicle:         v,
-			Rank:            item.Rank,
-			Score:           0,
-			Reason:          item.Reason,
-			MatchedCriteria: matches,
+			Vehicle: v,
+			Rank:    item.Rank,
+			Reason:  item.Reason,
 		})
 	}
 	if len(items) == 0 {
-		return nil, fmt.Errorf("ai returned no recognizable vehicle IDs")
+		slog.WarnContext(ctx, "ChatGPT não retornou IDs de veículos reconhecíveis, usando scoring")
+		return nil
 	}
-	// Ensure rank is correct even if AI returned them out of order.
+
+	// Ensure rank is contiguous even if the model returned items out of order.
 	sort.SliceStable(items, func(i, j int) bool { return items[i].Rank < items[j].Rank })
 	for i := range items {
 		items[i].Rank = i + 1
 	}
 
+	slog.InfoContext(ctx, "recomendação gerada por ChatGPT", "user_id", userID, "items", len(items))
 	return &models.Recommendation{
 		UserID:    userID,
 		Summary:   "Recomendação gerada por Inteligência Artificial.",
 		AISummary: aiRec.Summary,
 		Items:     items,
-	}, nil
+	}
 }
 
-func (s *RecommendationService) generateWithScoring(
-	ctx context.Context,
+func (s *RecommendationService) recommendWithScoring(
 	userID int64,
-	answers []models.SubmittedAnswer,
 	userProfile map[string]float64,
 	vehicles []models.Vehicle,
-) (*models.Recommendation, error) {
+) *models.Recommendation {
 	items := make([]models.RecommendationItem, 0, len(vehicles))
 	for _, vehicle := range vehicles {
 		score, matches := scoreVehicle(userProfile, vehicle.MatchProfile)
@@ -227,15 +229,11 @@ func (s *RecommendationService) generateWithScoring(
 		items[index].Rank = index + 1
 	}
 
-	recommendation := &models.Recommendation{
+	return &models.Recommendation{
 		UserID:  userID,
 		Summary: "Veículos ordenados pela compatibilidade com suas preferências.",
 		Items:   items,
 	}
-	if err := s.recommendationRepo.Create(ctx, recommendation, answers); err != nil {
-		return nil, err
-	}
-	return recommendation, nil
 }
 
 func (s *RecommendationService) History(ctx context.Context, userID int64, page, limit int) ([]models.Recommendation, int, error) {

@@ -13,25 +13,30 @@ import (
 const openAIEndpoint = "https://api.openai.com/v1/chat/completions"
 
 type OpenAIClient struct {
-	apiKey  string
-	model   string
-	timeout time.Duration
-	http    *http.Client
+	apiKey   string
+	model    string
+	endpoint string
+	http     *http.Client
 }
 
 func NewOpenAIClient(apiKey, model string, timeoutSecs int) *OpenAIClient {
 	return &OpenAIClient{
-		apiKey:  apiKey,
-		model:   model,
-		timeout: time.Duration(timeoutSecs) * time.Second,
-		http:    &http.Client{Timeout: time.Duration(timeoutSecs) * time.Second},
+		apiKey:   apiKey,
+		model:    model,
+		endpoint: openAIEndpoint,
+		http:     &http.Client{Timeout: time.Duration(timeoutSecs) * time.Second},
 	}
 }
 
 type openAIRequest struct {
-	Model       string          `json:"model"`
-	Messages    []openAIMessage `json:"messages"`
-	Temperature float64         `json:"temperature"`
+	Model          string          `json:"model"`
+	Messages       []openAIMessage `json:"messages"`
+	Temperature    float64         `json:"temperature"`
+	ResponseFormat responseFormat  `json:"response_format"`
+}
+
+type responseFormat struct {
+	Type string `json:"type"`
 }
 
 type openAIMessage struct {
@@ -57,12 +62,15 @@ func (c *OpenAIClient) ChatComplete(ctx context.Context, systemPrompt, userPromp
 			{Role: "user", Content: userPrompt},
 		},
 		Temperature: 0.3,
+		// Força o modelo a devolver um objeto JSON válido (sem texto/markdown
+		// em volta). A palavra "JSON" precisa aparecer nos prompts — já aparece.
+		ResponseFormat: responseFormat{Type: "json_object"},
 	})
 	if err != nil {
 		return "", fmt.Errorf("marshal openai request: %w", err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, openAIEndpoint, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.endpoint, bytes.NewReader(body))
 	if err != nil {
 		return "", fmt.Errorf("create openai request: %w", err)
 	}
