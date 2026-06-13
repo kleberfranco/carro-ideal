@@ -13,7 +13,8 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, "login.html", map[string]any{
-		"Title": "Login",
+		"Title":      "Login",
+		"IsLoggedIn": false,
 	})
 }
 
@@ -24,6 +25,12 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render(w, "register.html", map[string]any{
-		"Title": "Criar conta",
+		"Title":      "Criar conta",
+		"IsLoggedIn": false,
 	})
+}
+
+func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+	auth.ClearUserSession(w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

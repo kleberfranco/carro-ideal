@@ -32,7 +32,7 @@ $(function () {
         };
 
         $.ajax({
-            url: "/api/login",
+            url: "/api/auth/login",
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify(payload)

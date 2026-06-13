@@ -1,13 +1,22 @@
 package api
 
 import (
-	"github.com/gorilla/mux"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
 
-func RegisterRoutes(r *mux.Router, h *Handler) {
-	api := r.PathPrefix("/api").Subrouter()
-	api.Use(jsonMiddleware)
+func RegisterRoutes(r chi.Router, h *Handler) {
+	r.Route("/auth", func(r chi.Router) {
+		r.Use(JSONMiddleware)
+		r.Post("/register", h.Register)
+		r.Post("/login", h.Login)
+		r.Post("/logout", h.Logout)
+		r.Get("/me", h.Me)
+	})
 
-	api.HandleFunc("/register", h.Register).Methods("POST")
-	api.HandleFunc("/login", h.Login).Methods("POST")
+	r.Route("/user", func(r chi.Router) {
+		r.Use(JSONMiddleware)
+		r.Get("/", RequireAuth(http.HandlerFunc(h.Placeholder)))
+	})
 }

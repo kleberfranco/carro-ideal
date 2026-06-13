@@ -1,0 +1,40 @@
+# Go build artifacts
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Output directories
+bin/
+obj/
+
+# Dependency directories
+vendor/
+
+# Editor directories
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Logs
+*.log
+
+# Temporary files
+tmp/
+
+# Go module cache
+GOMODCACHE/

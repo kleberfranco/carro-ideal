@@ -1,13 +1,9 @@
 package admin
 
 import (
-	"net/http"
-
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
-func RegisterRoutes(r *mux.Router, h *Handler) {
-	s := r.PathPrefix("/admin").Subrouter()
-	s.HandleFunc("", h.AdminHandler).Methods(http.MethodGet)
-	s.HandleFunc("/", h.AdminHandler).Methods(http.MethodGet)
+func RegisterRoutes(r chi.Router, h *Handler) {
+	r.Get("/", h.AdminHandler)
 }

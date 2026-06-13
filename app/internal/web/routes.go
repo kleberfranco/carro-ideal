@@ -3,15 +3,15 @@ package web
 import (
 	"net/http"
 
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
-func RegisterRoutes(r *mux.Router, h *Handler) {
+func RegisterRoutes(r chi.Router, h *Handler) {
 	static := http.StripPrefix("/static/", http.FileServer(http.Dir("web/static")))
-	r.PathPrefix("/static/").Handler(static)
+	r.Handle("/static/*", static)
 
-	r.HandleFunc("/", h.HomeHandler).Methods(http.MethodGet)
-	r.HandleFunc("/login", h.LoginHandler).Methods(http.MethodGet)
-	r.HandleFunc("/register", h.RegisterHandler).Methods(http.MethodGet)
-	r.HandleFunc("/recommend", h.RecommendHandler).Methods(http.MethodGet)
+	r.Get("/", h.HomeHandler)
+	r.Get("/login", h.LoginHandler)
+	r.Get("/register", h.RegisterHandler)
+	r.Get("/recommend", h.RecommendHandler)
 }

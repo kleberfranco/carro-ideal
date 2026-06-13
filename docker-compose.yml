@@ -1,25 +1,27 @@
+version: "3.9"
+
 services:
   app:
     build:
       context: .
-      target: dev
     container_name: carro-ideal-app
-    volumes:
-      - .:/app
     ports:
       - "8080:8080"
     depends_on:
       db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
     environment:
+      ENVIRONMENT: development
+      PORT: 8080
       DB_HOST: db
       DB_PORT: 5432
       DB_USER: postgres
       DB_PASSWORD: postgres
       DB_NAME: carro_ideal
-    command: air
+      DB_MAX_OPEN_CONNS: 25
+      DB_MAX_IDLE_CONNS: 5
+      SESSION_SECRET: change-me
+      LOG_LEVEL: debug
 
   db:
     image: postgres:15
@@ -38,18 +40,6 @@ services:
       interval: 3s
       timeout: 5s
       retries: 5
-
-  migrate:
-    image: migrate/migrate
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./migrations:/migrations
-    command: >
-      -path=/migrations
-      -database=postgres://postgres:postgres@db:5432/carro_ideal?sslmode=disable
-      up
 
 volumes:
   postgres_data:

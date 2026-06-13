@@ -58,7 +58,6 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	err := h.userService.Register(r.Context(), req.Name, req.Email, req.Password, req.ConfirmPassword)
 	if err != nil {
 		if service.IsEmailAlreadyUsed(err) {
-			w.WriteHeader(http.StatusConflict)
 			writeJSON(w, http.StatusConflict, map[string]string{
 				"error": "Este e-mail já está em uso.",
 			})
@@ -71,8 +70,17 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := h.userService.Login(r.Context(), req.Email, req.Password)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{
+			"error": "Usuário criado, mas houve falha no login automático.",
+		})
+		return
+	}
+
+	auth.SetUserSession(w, user.ID)
 	writeJSON(w, http.StatusCreated, map[string]string{
-		"message": "Usuário registrado com sucesso.",
+		"message": "Usuário registrado e autenticado com sucesso.",
 	})
 }
 
@@ -116,6 +124,42 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 			"id":    user.ID,
 			"name":  user.Name,
 			"email": user.Email,
+			"role":  user.Role,
+		},
+	})
+}
+
+func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	auth.ClearUserSession(w)
+	writeJSON(w, http.StatusOK, map[string]string{
+		"message": "Logout realizado com sucesso.",
+	})
+}
+
+func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
+	userID, ok := auth.GetUserID(r)
+	if !ok {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{
+			"error": "usuário não autenticado",
+		})
+		return
+	}
+
+	user, err := h.userService.GetByID(r.Context(), userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "Falha ao buscar dados do usuário.",
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]interface{}{
+		"user": map[string]interface{}{
+			"id":    user.ID,
+			"name":  user.Name,
+			"email": user.Email,
+			"role":  user.Role,
+			"active": user.Active,
 		},
 	})
 }

@@ -34,7 +34,7 @@ $(function () {
         };
 
         $.ajax({
-            url: "/api/register",
+            url: "/api/auth/register",
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify(payload)

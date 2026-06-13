@@ -29,3 +29,23 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	userHandler.Login(w, r)
 }
+
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	userHandler := &UserHandler{
+		userService: h.UserService,
+	}
+	userHandler.Logout(w, r)
+}
+
+func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+	userHandler := &UserHandler{
+		userService: h.UserService,
+	}
+	userHandler.Me(w, r)
+}
+
+func (h *Handler) Placeholder(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusNotImplemented)
+	_, _ = w.Write([]byte(`{"success":false,"error":"endpoint não implementado","code":"NOT_IMPLEMENTED"}`))
+}

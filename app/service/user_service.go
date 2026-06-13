@@ -48,9 +48,11 @@ func (s *UserService) Register(ctx context.Context, name, email, password, confi
 	}
 
 	user := &models.User{
-		Name:     name,
-		Email:    email,
-		Password: string(hashed),
+		Name:         name,
+		Email:        email,
+		PasswordHash: string(hashed),
+		Role:         "user",
+		Active:       true,
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
@@ -70,11 +72,19 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*model
 		return nil, errors.New("email ou senha incorretos")
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
+	if !user.Active {
+		return nil, errors.New("usuário inativo")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
 		return nil, errors.New("email ou senha incorretos")
 	}
 
 	return user, nil
+}
+
+func (s *UserService) GetByID(ctx context.Context, id int64) (*models.User, error) {
+	return s.repo.GetByID(ctx, id)
 }
 
 func IsEmailAlreadyUsed(err error) bool {
