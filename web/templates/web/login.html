@@ -1,29 +1,30 @@
 {{ define "content" }}
-<h1>Login</h1>
+<div class="auth-wrap">
+    <div class="auth-card">
+        <p class="eyebrow text-center">Bem-vindo de volta</p>
+        <h1 class="h4 text-center mb-4">Entrar na conta</h1>
 
-<div id="login-error" class="alert" style="display: none;"></div>
+        <div id="login-error" class="alert alert-danger d-none mb-3" role="alert"></div>
 
-<form id="login-form" method="POST">
-    <div class="form-group">
-        <label for="email">E-mail</label>
-        <input type="email" id="email" name="email" class="form-control" placeholder="E-mail" required>
-        <div class="invalid-feedback"></div>
+        <form id="login-form">
+            <div class="mb-3">
+                <label class="form-label" for="email">E-mail</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="seu@email.com" required>
+                <div class="invalid-feedback"></div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label" for="password">Senha</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                <div class="invalid-feedback"></div>
+            </div>
+            <button type="submit" id="login-submit" class="btn btn-primary btn-lg w-100">Entrar</button>
+        </form>
+
+        <div class="auth-footer">
+            Não tem conta? <a href="/register">Criar conta</a>
+        </div>
     </div>
-
-    <div class="form-group">
-        <label for="password">Senha</label>
-        <input type="password" id="password" name="password" class="form-control" placeholder="Senha" required>
-        <div class="invalid-feedback"></div>
-    </div>
-
-    <button type="submit" id="login-submit" class="btn btn-primary">Entrar</button>
-</form>
-
-<p>
-    <a href="/register">Criar conta</a>
-    <a href="/">Voltar</a>
-</p>
+</div>
 
 <script src="/static/js/web/login.js"></script>
 {{ end }}
-

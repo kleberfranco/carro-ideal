@@ -16,18 +16,6 @@ $.ajaxPrefilter(function (options, originalOptions, xhr) {
 });
 
 $(function () {
-    const root = document.documentElement;
-    const theme = localStorage.getItem("carro-ideal-theme") || "light";
-    root.dataset.theme = theme;
-    $("#theme-toggle").attr("aria-pressed", theme === "dark").text(theme === "dark" ? "Tema claro" : "Tema escuro");
-
-    $("#theme-toggle").on("click", function () {
-        const next = root.dataset.theme === "dark" ? "light" : "dark";
-        root.dataset.theme = next;
-        localStorage.setItem("carro-ideal-theme", next);
-        $(this).attr("aria-pressed", next === "dark").text(next === "dark" ? "Tema claro" : "Tema escuro");
-    });
-
     if ($("#admin-nav-item").length) {
         $.getJSON("/api/auth/me").done(function (response) {
             if (response.data.user.role.toLowerCase() === "admin") {

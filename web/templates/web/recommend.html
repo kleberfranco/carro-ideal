@@ -1,11 +1,5 @@
 {{ define "content" }}
-<section class="hero-panel mb-4">
-    <p class="eyebrow">Seu próximo carro começa aqui</p>
-    <h1 class="text-start">Encontre opções que combinam com a sua rotina</h1>
-    <p class="lead mb-0">Responda cinco perguntas. O Carro Ideal compara seu perfil com o catálogo e explica cada resultado.</p>
-</section>
-
-<ul class="nav nav-pills mb-4" id="recommend-tabs">
+<ul class="nav nav-pills mb-4 mb-md-5 flex-nowrap overflow-auto" id="recommend-tabs" style="-webkit-overflow-scrolling:touch;gap:.25rem">
     <li class="nav-item">
         <button class="nav-link active" data-view="questionnaire">Questionário</button>
     </li>
@@ -17,56 +11,69 @@
     </li>
 </ul>
 
-<div id="recommend-alert" class="alert d-none" role="alert"></div>
+<div id="recommend-alert" class="alert d-none mb-4" role="alert"></div>
 
 <section id="questionnaire-view">
     <div id="questionnaire-loading" aria-label="Carregando perguntas">
         <div class="skeleton-card"></div>
         <div class="skeleton-card"></div>
-        <div class="skeleton-card"></div>
+        <div class="skeleton-card" style="height:60px"></div>
     </div>
     <form id="questionnaire-form" class="d-none">
+        <div id="quiz-header" class="quiz-header d-none">
+            <div class="quiz-meta">
+                <span id="quiz-counter" class="quiz-counter">1 / 5</span>
+            </div>
+            <div class="quiz-progress">
+                <div id="quiz-progress-bar" class="quiz-progress-bar"></div>
+            </div>
+        </div>
+
         <div id="questions-list"></div>
-        <button id="generate-submit" class="btn btn-primary btn-lg w-100" type="submit">
-            Gerar minhas recomendações
-        </button>
+
+        <div id="quiz-nav" class="quiz-nav d-none">
+            <button type="button" id="quiz-prev" class="btn-ghost d-none">← Anterior</button>
+            <button id="generate-submit" class="btn btn-primary btn-lg d-none" type="submit">
+                Ver recomendações →
+            </button>
+        </div>
     </form>
 </section>
 
 <section id="results-view" class="d-none">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <p class="eyebrow mb-1" id="results-eyebrow">Recomendação gerada por IA</p>
-            <h2 class="text-start mb-0">Seus carros recomendados</h2>
+            <p class="eyebrow mb-1" id="results-eyebrow">Compatibilidade calculada</p>
+            <h2 class="mb-0">Seus carros recomendados</h2>
         </div>
-        <button class="btn btn-outline-primary w-auto" data-view="questionnaire">Refazer</button>
+        <button class="btn btn-outline-primary" data-view="questionnaire">Refazer</button>
     </div>
+
     <div id="ai-summary-block" class="d-none mb-4">
-        <div class="card border-0 bg-body-secondary">
-            <div class="card-body">
-                <p class="eyebrow mb-1"><span class="badge bg-primary me-1">IA</span> Análise do seu perfil</p>
-                <p class="mb-0" id="ai-summary-text"></p>
-            </div>
+        <div class="p-4 rounded-3" style="background:var(--primary-pale);border:1px solid color-mix(in srgb,var(--primary) 25%,transparent)">
+            <p class="eyebrow mb-1"><span class="badge bg-primary me-1">IA</span> Análise do seu perfil</p>
+            <p class="mb-0" id="ai-summary-text"></p>
         </div>
     </div>
+
     <div class="comparison-toolbar mb-3">
         <span id="comparison-count">Selecione de 2 a 3 veículos para comparar.</span>
-        <button class="btn btn-primary w-auto" id="compare-selected" type="button" disabled>Comparar</button>
+        <button class="btn btn-primary" id="compare-selected" type="button" disabled>Comparar</button>
     </div>
     <div id="recommendation-results" class="row g-3"></div>
 </section>
 
 <section id="history-view" class="d-none">
     <p class="eyebrow mb-1">Suas pesquisas</p>
-    <h2 class="text-start mb-4">Histórico de recomendações</h2>
+    <h2 class="mb-4">Histórico</h2>
     <div id="history-list"></div>
 </section>
 
 <div class="modal fade" id="vehicle-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title fs-4" id="vehicle-modal-title">Detalhes do veículo</h2>
+            <div class="modal-header border-0 pb-0">
+                <h2 class="modal-title fs-5" id="vehicle-modal-title">Detalhes do veículo</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body" id="vehicle-modal-body"></div>
@@ -77,8 +84,8 @@
 <div class="modal fade" id="comparison-modal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title fs-4">Comparação de veículos</h2>
+            <div class="modal-header border-0 pb-0">
+                <h2 class="modal-title fs-5">Comparação de veículos</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body table-responsive" id="comparison-body"></div>

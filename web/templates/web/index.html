@@ -1,8 +1,31 @@
 {{ define "content" }}
-<h1>Carro Ideal</h1>
-<p>Escolha o carro perfeito usando IA.</p>
+<div class="home-hero">
+    <p class="eyebrow">Powered by ChatGPT</p>
+    <h1>Encontre o carro ideal para você</h1>
+    <p class="lead">Responda algumas perguntas sobre sua rotina e orçamento. Nossa IA analisa seu perfil e indica os modelos mais compatíveis do catálogo.</p>
+    <div class="hero-cta">
+        <a href="/recommend" class="btn btn-primary btn-lg">Começar agora</a>
+        <a href="/register" class="btn btn-outline-secondary btn-lg">Criar conta grátis</a>
+    </div>
+</div>
 
-<a href="/login">Entrar</a>
-<a href="/register">Criar conta</a>
-<a href="/recommend">Recomendação</a>
+<hr class="home-divider">
+
+<div class="features-row">
+    <div class="feature-item">
+        <div class="feature-num">1</div>
+        <h3>Questionário rápido</h3>
+        <p>Cinco perguntas sobre seu estilo de vida, orçamento e preferências de conforto.</p>
+    </div>
+    <div class="feature-item">
+        <div class="feature-num">2</div>
+        <h3>IA analisa seu perfil</h3>
+        <p>ChatGPT cruza suas respostas com o catálogo e explica por que cada carro combina.</p>
+    </div>
+    <div class="feature-item">
+        <div class="feature-num">3</div>
+        <h3>Compare e decida</h3>
+        <p>Veja até cinco sugestões e compare modelos lado a lado para escolher com segurança.</p>
+    </div>
+</div>
 {{ end }}
