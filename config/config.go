@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -32,6 +33,12 @@ type Config struct {
 	DBMaxIdleConns int
 	SessionSecret  string
 	LogLevel       string
+	AllowedOrigins []string
+	RateLimit      int
+	RateWindow     int
+	CacheTTL       int
+	TLSCertFile    string
+	TLSKeyFile     string
 }
 
 func Load() (*Config, error) {
@@ -52,6 +59,12 @@ func Load() (*Config, error) {
 		DBMaxIdleConns: getEnvInt("DB_MAX_IDLE_CONNS", defaultDBMaxIdleConns),
 		SessionSecret:  getEnv("SESSION_SECRET", ""),
 		LogLevel:       getEnv("LOG_LEVEL", "info"),
+		AllowedOrigins: splitEnv("ALLOWED_ORIGINS"),
+		RateLimit:      getEnvInt("RATE_LIMIT_REQUESTS", 120),
+		RateWindow:     getEnvInt("RATE_LIMIT_WINDOW_SECONDS", 60),
+		CacheTTL:       getEnvInt("CACHE_TTL_SECONDS", 60),
+		TLSCertFile:    getEnv("TLS_CERT_FILE", ""),
+		TLSKeyFile:     getEnv("TLS_KEY_FILE", ""),
 	}
 
 	if cfg.SessionSecret == "" {
@@ -61,8 +74,29 @@ func Load() (*Config, error) {
 	if cfg.DBUser == "" || cfg.DBPassword == "" || cfg.DBName == "" || cfg.DBHost == "" || cfg.DBPort == "" {
 		return nil, fmt.Errorf("database environment variables must be configured")
 	}
+	if (cfg.TLSCertFile == "") != (cfg.TLSKeyFile == "") {
+		return nil, fmt.Errorf("TLS_CERT_FILE and TLS_KEY_FILE must be configured together")
+	}
+	if cfg.RateLimit < 1 || cfg.RateWindow < 1 || cfg.CacheTTL < 1 {
+		return nil, fmt.Errorf("rate limit, rate window, and cache TTL must be positive")
+	}
 
 	return cfg, nil
+}
+
+func splitEnv(key string) []string {
+	value := getEnv(key, "")
+	if value == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
 
 func (c *Config) DatabaseURL() string {

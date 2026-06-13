@@ -8,6 +8,17 @@
     --border: #dbe3ef;
 }
 
+[data-theme="dark"] {
+    color-scheme: dark;
+    --ink: #e5edf9;
+    --muted: #9fb0c8;
+    --primary: #74a7ff;
+    --primary-dark: #a9c8ff;
+    --surface: #172033;
+    --background: #0d1422;
+    --border: #34445f;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -42,8 +53,88 @@ h3 {
 .empty-state {
     border: 1px solid var(--border);
     border-radius: 1.25rem;
-    background: rgba(255, 255, 255, 0.92);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
     box-shadow: 0 18px 50px rgba(31, 51, 82, 0.08);
+}
+
+.admin-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-table-wrap,
+.admin-question-card,
+.stat-card {
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--surface);
+    box-shadow: 0 12px 35px rgba(31, 51, 82, 0.06);
+}
+
+.admin-table-wrap {
+    padding: 0.5rem 1rem;
+}
+
+.admin-table-wrap small,
+.admin-question-card small {
+    display: block;
+    color: var(--muted);
+}
+
+.stat-card {
+    display: flex;
+    min-height: 130px;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1.25rem;
+}
+
+.stat-card strong {
+    color: var(--primary);
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.stat-card span {
+    margin-top: 0.5rem;
+    color: var(--muted);
+}
+
+.admin-question-card {
+    margin-bottom: 1rem;
+    padding: 1.25rem;
+}
+
+.question-order {
+    margin-right: 0.5rem;
+    color: var(--primary);
+    font-weight: 800;
+}
+
+.admin-options {
+    margin: 0 0 1rem;
+    padding: 0;
+    list-style: none;
+}
+
+.admin-options li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.65rem 0;
+    border-top: 1px solid var(--border);
+}
+
+.admin-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .hero-panel {
@@ -154,7 +245,7 @@ h3 {
 
 .reason {
     margin: 0.75rem 0;
-    color: #34445f;
+    color: var(--muted);
 }
 
 .vehicle-facts {
@@ -166,8 +257,8 @@ h3 {
 .vehicle-facts span {
     padding: 0.35rem 0.65rem;
     border-radius: 999px;
-    background: #edf2f8;
-    color: #44536c;
+    background: color-mix(in srgb, var(--surface) 75%, var(--primary) 25%);
+    color: var(--ink);
     font-size: 0.85rem;
 }
 
@@ -199,7 +290,7 @@ h3 {
 .detail-grid div {
     padding: 0.85rem;
     border-radius: 0.75rem;
-    background: #f3f6fb;
+    background: var(--background);
 }
 
 .detail-grid small,
@@ -218,6 +309,55 @@ h3 {
     opacity: 0.7;
 }
 
+.comparison-toolbar,
+.compare-choice {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.comparison-toolbar {
+    justify-content: space-between;
+    color: var(--muted);
+}
+
+.comparison-best {
+    background: color-mix(in srgb, #198754 18%, var(--surface));
+    font-weight: 800;
+}
+
+.skeleton-card {
+    height: 150px;
+    margin-bottom: 1rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(90deg, var(--border) 25%, var(--surface) 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.4s infinite;
+}
+
+@keyframes skeleton-loading {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+}
+
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .table {
+    --bs-navbar-color: var(--ink);
+    --bs-navbar-brand-color: var(--ink);
+    --bs-table-color: var(--ink);
+    --bs-table-bg: var(--surface);
+    background-color: var(--surface) !important;
+    color: var(--ink);
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    border-color: var(--border);
+    background: var(--surface);
+    color: var(--ink);
+}
+
 @media (max-width: 640px) {
     .vehicle-card {
         flex-direction: column;
@@ -226,6 +366,12 @@ h3 {
     .history-item {
         align-items: flex-start;
         gap: 0.75rem;
+        flex-direction: column;
+    }
+
+    .comparison-toolbar,
+    .admin-heading {
+        align-items: stretch;
         flex-direction: column;
     }
 }

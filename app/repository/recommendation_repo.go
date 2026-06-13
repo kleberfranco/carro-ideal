@@ -144,7 +144,7 @@ func (r *recommendationRepository) GetByID(ctx context.Context, id, userID int64
 		err := rows.Scan(
 			&item.ID, &item.RecommendationID, &item.Rank, &item.Score, &item.Reason, &item.CreatedAt,
 			&item.Vehicle.ID, &item.Vehicle.CategoryID, &item.Vehicle.Category.ID,
-			&item.Vehicle.Category.Name, &item.Vehicle.Category.Description, &item.Vehicle.Brand,
+			&item.Vehicle.Category.Name, &item.Vehicle.Category.Description, &item.Vehicle.Category.Active, &item.Vehicle.Brand,
 			&item.Vehicle.Model, &item.Vehicle.Version, &item.Vehicle.Year, &item.Vehicle.FuelType,
 			&item.Vehicle.Transmission, &item.Vehicle.PriceMin, &item.Vehicle.PriceMax,
 			&item.Vehicle.Seats, &item.Vehicle.TrunkCapacity, &item.Vehicle.ConsumptionCity,

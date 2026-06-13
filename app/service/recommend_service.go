@@ -19,19 +19,33 @@ var (
 )
 
 type QuestionnaireService struct {
-	repo repository.QuestionRepository
+	repo  repository.QuestionRepository
+	cache *CatalogCache
 }
 
-func NewQuestionnaireService(repo repository.QuestionRepository) *QuestionnaireService {
-	return &QuestionnaireService{repo: repo}
+func NewQuestionnaireService(repo repository.QuestionRepository, caches ...*CatalogCache) *QuestionnaireService {
+	var cache *CatalogCache
+	if len(caches) > 0 {
+		cache = caches[0]
+	}
+	return &QuestionnaireService{repo: repo, cache: cache}
 }
 
 func (s *QuestionnaireService) GetActive(ctx context.Context) ([]models.Question, error) {
-	return s.repo.GetActive(ctx)
+	if s.cache != nil {
+		if questions, found := s.cache.Questions(); found {
+			return questions, nil
+		}
+	}
+	questions, err := s.repo.GetActive(ctx)
+	if err == nil && s.cache != nil {
+		s.cache.SetQuestions(questions)
+	}
+	return questions, err
 }
 
 func (s *QuestionnaireService) BuildProfile(ctx context.Context, answers []models.SubmittedAnswer) (map[string]float64, error) {
-	questions, err := s.repo.GetActive(ctx)
+	questions, err := s.GetActive(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -73,31 +87,30 @@ func (s *QuestionnaireService) BuildProfile(ctx context.Context, answers []model
 }
 
 type RecommendationService struct {
-	questionnaireRepo  repository.QuestionRepository
-	vehicleRepo        repository.VehicleRepository
+	questionnaire      *QuestionnaireService
+	vehicles           *VehicleService
 	recommendationRepo repository.RecommendationRepository
 }
 
 func NewRecommendationService(
-	questionnaireRepo repository.QuestionRepository,
-	vehicleRepo repository.VehicleRepository,
+	questionnaire *QuestionnaireService,
+	vehicles *VehicleService,
 	recommendationRepo repository.RecommendationRepository,
 ) *RecommendationService {
 	return &RecommendationService{
-		questionnaireRepo:  questionnaireRepo,
-		vehicleRepo:        vehicleRepo,
+		questionnaire:      questionnaire,
+		vehicles:           vehicles,
 		recommendationRepo: recommendationRepo,
 	}
 }
 
 func (s *RecommendationService) Generate(ctx context.Context, userID int64, answers []models.SubmittedAnswer) (*models.Recommendation, error) {
-	questionnaire := NewQuestionnaireService(s.questionnaireRepo)
-	userProfile, err := questionnaire.BuildProfile(ctx, answers)
+	userProfile, err := s.questionnaire.BuildProfile(ctx, answers)
 	if err != nil {
 		return nil, err
 	}
 
-	vehicles, err := s.vehicleRepo.GetActive(ctx, 0)
+	vehicles, err := s.vehicles.GetActive(ctx, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -109,9 +122,10 @@ func (s *RecommendationService) Generate(ctx context.Context, userID int64, answ
 	for _, vehicle := range vehicles {
 		score, matches := scoreVehicle(userProfile, vehicle.MatchProfile)
 		items = append(items, models.RecommendationItem{
-			Vehicle: vehicle,
-			Score:   score,
-			Reason:  buildReason(matches),
+			Vehicle:         vehicle,
+			Score:           score,
+			Reason:          buildReason(matches),
+			MatchedCriteria: matches,
 		})
 	}
 

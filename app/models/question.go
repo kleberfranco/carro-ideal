@@ -23,6 +23,21 @@ type AnswerOption struct {
 	Active       bool               `json:"active"`
 }
 
+type QuestionInput struct {
+	Text         *string  `json:"text"`
+	Type         *string  `json:"type"`
+	Weight       *float64 `json:"weight"`
+	DisplayOrder *int     `json:"display_order"`
+	Active       *bool    `json:"active"`
+}
+
+type AnswerOptionInput struct {
+	Text         *string            `json:"text"`
+	ScoreProfile map[string]float64 `json:"score_profile"`
+	DisplayOrder *int               `json:"display_order"`
+	Active       *bool              `json:"active"`
+}
+
 type SubmittedAnswer struct {
 	QuestionID     int64 `json:"question_id"`
 	AnswerOptionID int64 `json:"answer_option_id"`

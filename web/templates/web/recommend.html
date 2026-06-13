@@ -20,9 +20,10 @@
 <div id="recommend-alert" class="alert d-none" role="alert"></div>
 
 <section id="questionnaire-view">
-    <div id="questionnaire-loading" class="text-center py-5">
-        <div class="spinner-border text-primary" role="status"></div>
-        <p class="mt-3">Carregando perguntas...</p>
+    <div id="questionnaire-loading" aria-label="Carregando perguntas">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
     </div>
     <form id="questionnaire-form" class="d-none">
         <div id="questions-list"></div>
@@ -39,6 +40,10 @@
             <h2 class="text-start mb-0">Seus carros recomendados</h2>
         </div>
         <button class="btn btn-outline-primary w-auto" data-view="questionnaire">Refazer</button>
+    </div>
+    <div class="comparison-toolbar mb-3">
+        <span id="comparison-count">Selecione de 2 a 3 veículos para comparar.</span>
+        <button class="btn btn-primary w-auto" id="compare-selected" type="button" disabled>Comparar</button>
     </div>
     <div id="recommendation-results" class="row g-3"></div>
 </section>
@@ -57,6 +62,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
             </div>
             <div class="modal-body" id="vehicle-modal-body"></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="comparison-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-4">Comparação de veículos</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body table-responsive" id="comparison-body"></div>
         </div>
     </div>
 </div>

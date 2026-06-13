@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"carro-ideal/app/internal/auth"
+	"carro-ideal/app/models"
 	"carro-ideal/app/repository"
 	"carro-ideal/app/service"
 )
@@ -17,6 +18,23 @@ type middlewareSessionRepository struct {
 	userID    int64
 	expiresAt time.Time
 }
+
+type roleUserRepository struct {
+	user *models.User
+}
+
+func (r *roleUserRepository) ExistsByEmail(context.Context, string) (bool, error) {
+	return false, nil
+}
+func (r *roleUserRepository) Create(context.Context, *models.User) error { return nil }
+func (r *roleUserRepository) GetByEmail(context.Context, string) (*models.User, error) {
+	return r.user, nil
+}
+func (r *roleUserRepository) GetByID(context.Context, int64) (*models.User, error) {
+	return r.user, nil
+}
+func (r *roleUserRepository) Update(context.Context, *models.User) error { return nil }
+func (r *roleUserRepository) Deactivate(context.Context, int64) error    { return nil }
 
 func (r *middlewareSessionRepository) Create(_ context.Context, tokenHash string, userID int64, expiresAt time.Time) error {
 	r.tokenHash = tokenHash
@@ -103,5 +121,38 @@ func TestSessionCookieSecurityFlags(t *testing.T) {
 	}
 	if !cookies[0].HttpOnly || !cookies[0].Secure || cookies[0].SameSite != http.SameSiteLaxMode {
 		t.Fatal("session cookie is missing required security flags")
+	}
+}
+
+func TestRequireAdmin(t *testing.T) {
+	next := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	tests := []struct {
+		name       string
+		role       string
+		wantStatus int
+	}{
+		{name: "admin accepted", role: "admin", wantStatus: http.StatusNoContent},
+		{name: "regular user rejected", role: "user", wantStatus: http.StatusForbidden},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			userService := service.NewUserService(&roleUserRepository{
+				user: &models.User{ID: 7, Role: test.role, Active: true},
+			})
+			handler := RequireAdmin(userService, next)
+			request := httptest.NewRequest(http.MethodGet, "/api/admin/dashboard", nil)
+			request = request.WithContext(context.WithValue(request.Context(), userIDKey, int64(7)))
+			recorder := httptest.NewRecorder()
+
+			handler.ServeHTTP(recorder, request)
+
+			if recorder.Code != test.wantStatus {
+				t.Fatalf("status = %d, want %d", recorder.Code, test.wantStatus)
+			}
+		})
 	}
 }

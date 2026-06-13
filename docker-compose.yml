@@ -20,6 +20,10 @@ services:
       DB_MAX_IDLE_CONNS: 5
       SESSION_SECRET: change-me
       LOG_LEVEL: debug
+      ALLOWED_ORIGINS: http://localhost:8080
+      RATE_LIMIT_REQUESTS: 120
+      RATE_LIMIT_WINDOW_SECONDS: 60
+      CACHE_TTL_SECONDS: 60
 
   db:
     image: postgres:15

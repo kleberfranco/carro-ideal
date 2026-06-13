@@ -30,6 +30,15 @@
                 <li class="nav-item">
                     <a class="nav-link" href="/recommend">Recomendações</a>
                 </li>
+                {{ if .IsAdmin }}
+                <li class="nav-item">
+                    <a class="nav-link" href="/admin">Administração</a>
+                </li>
+                {{ else }}
+                <li class="nav-item d-none" id="admin-nav-item">
+                    <a class="nav-link" href="/admin">Administração</a>
+                </li>
+                {{ end }}
                 <li class="nav-item">
                     <a class="nav-link" href="/logout">Sair</a>
                 </li>
@@ -41,6 +50,10 @@
                     <a class="nav-link" href="/register">Criar conta</a>
                 </li>
                 {{ end }}
+                <li class="nav-item ms-lg-2">
+                    <button class="btn btn-sm btn-outline-secondary mt-1" id="theme-toggle"
+                            type="button" aria-pressed="false">Tema escuro</button>
+                </li>
             </ul>
         </div>
     </div>
@@ -54,6 +67,7 @@
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"
 ></script>
+<script src="/static/js/session.js"></script>
 </body>
 
 </html>

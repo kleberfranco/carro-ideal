@@ -18,5 +18,6 @@ type RecommendationItem struct {
 	Rank             int       `json:"rank"`
 	Score            float64   `json:"score"`
 	Reason           string    `json:"reason"`
+	MatchedCriteria  []string  `json:"matched_criteria,omitempty"`
 	CreatedAt        time.Time `json:"created_at"`
 }

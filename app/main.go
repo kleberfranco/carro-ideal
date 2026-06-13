@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 	"carro-ideal/app/internal/admin"
 	"carro-ideal/app/internal/api"
 	"carro-ideal/app/internal/health"
+	platformmw "carro-ideal/app/internal/platform"
 	"carro-ideal/app/internal/web"
 	"carro-ideal/app/repository"
 	"carro-ideal/app/service"
@@ -43,12 +45,16 @@ func main() {
 	questionRepo := repository.NewQuestionRepository(db.GetDB())
 	vehicleRepo := repository.NewVehicleRepository(db.GetDB())
 	recommendationRepo := repository.NewRecommendationRepository(db.GetDB())
+	adminRepo := repository.NewAdminRepository(db.GetDB())
+	catalogCache := service.NewCatalogCache(time.Duration(cfg.CacheTTL) * time.Second)
 	userService := service.NewUserService(userRepo)
 	authService := service.NewAuthService(sessionRepo)
-	questionnaireService := service.NewQuestionnaireService(questionRepo)
-	vehicleService := service.NewVehicleService(vehicleRepo)
-	recommendationService := service.NewRecommendationService(questionRepo, vehicleRepo, recommendationRepo)
+	questionnaireService := service.NewQuestionnaireService(questionRepo, catalogCache)
+	vehicleService := service.NewVehicleService(vehicleRepo, catalogCache)
+	recommendationService := service.NewRecommendationService(questionnaireService, vehicleService, recommendationRepo)
+	adminService := service.NewAdminService(adminRepo, catalogCache)
 	secureCookie := strings.EqualFold(cfg.Environment, "production")
+	logger := newLogger(cfg.LogLevel)
 
 	webHandler := web.NewHandler(userService, authService, secureCookie)
 	apiHandler := api.NewHandler(
@@ -59,14 +65,19 @@ func main() {
 		vehicleService,
 		secureCookie,
 	)
-	adminHandler := admin.NewHandler(userService)
+	adminHandler := admin.NewHandler(userService, authService, adminService)
 	healthHandler := health.NewHandler(db.GetDB())
 
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
+	r.Use(platformmw.RequestIDHeader)
+	r.Use(platformmw.Recovery(logger))
+	r.Use(platformmw.RequestLogger(logger))
+	r.Use(platformmw.SecurityHeaders)
+	r.Use(platformmw.CORS(cfg.AllowedOrigins))
+	r.Use(platformmw.RateLimit(cfg.RateLimit, time.Duration(cfg.RateWindow)*time.Second))
+	r.Use(platformmw.CSRF(secureCookie))
 
 	r.Get("/health", healthHandler.Health)
 
@@ -119,7 +130,14 @@ func main() {
 	})
 
 	r.Route("/api/admin", func(r chi.Router) {
-		r.Get("/", adminHandler.AdminHandler)
+		r.Use(api.JSONMiddleware)
+		r.Use(func(next http.Handler) http.Handler {
+			return api.RequireAuth(authService, next)
+		})
+		r.Use(func(next http.Handler) http.Handler {
+			return api.RequireAdmin(userService, next)
+		})
+		admin.RegisterRoutes(r, adminHandler)
 	})
 
 	r.Route("/web", func(r chi.Router) {
@@ -132,11 +150,13 @@ func main() {
 	r.Get("/login", webHandler.LoginHandler)
 	r.Get("/register", webHandler.RegisterHandler)
 	r.Get("/recommend", webHandler.RecommendHandler)
+	r.Get("/admin", adminHandler.Page)
 	r.Get("/logout", webHandler.LogoutHandler)
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	r.Get("/", webHandler.HomeHandler)
+	r.NotFound(platformmw.NotFound)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%s", cfg.Port),
@@ -147,9 +167,16 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("starting server on http://localhost:%s", cfg.Port)
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("server error: %v", err)
+		var serveErr error
+		if cfg.TLSCertFile != "" {
+			logger.Info("starting HTTPS server", "port", cfg.Port)
+			serveErr = srv.ListenAndServeTLS(cfg.TLSCertFile, cfg.TLSKeyFile)
+		} else {
+			logger.Info("starting HTTP server", "port", cfg.Port)
+			serveErr = srv.ListenAndServe()
+		}
+		if serveErr != nil && serveErr != http.ErrServerClosed {
+			log.Fatalf("server error: %v", serveErr)
 		}
 	}()
 
@@ -164,4 +191,19 @@ func main() {
 		log.Fatalf("server shutdown failed: %v", err)
 	}
 	log.Println("server stopped cleanly")
+}
+
+func newLogger(level string) *slog.Logger {
+	var parsed slog.Level
+	switch strings.ToLower(level) {
+	case "debug":
+		parsed = slog.LevelDebug
+	case "warn":
+		parsed = slog.LevelWarn
+	case "error":
+		parsed = slog.LevelError
+	default:
+		parsed = slog.LevelInfo
+	}
+	return slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: parsed}))
 }

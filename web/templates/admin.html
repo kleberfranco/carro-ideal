@@ -1,10 +1,134 @@
 {{ define "content" }}
-<h1>Administração</h1>
+<section class="hero-panel admin-hero mb-4">
+    <p class="eyebrow">Operação do catálogo</p>
+    <h1 class="text-start">Painel administrativo</h1>
+    <p class="lead mb-0">Gerencie veículos, categorias e as regras que alimentam o questionário.</p>
+</section>
 
-<p>Área administrativa (em desenvolvimento).</p>
-
-<ul>
-    <li><a href="/">Início</a></li>
-    <li><a href="/recommend">Recomendações</a></li>
+<ul class="nav nav-pills mb-4" id="admin-tabs">
+    <li class="nav-item"><button class="nav-link active" data-admin-view="dashboard">Visão geral</button></li>
+    <li class="nav-item"><button class="nav-link" data-admin-view="vehicles">Veículos</button></li>
+    <li class="nav-item"><button class="nav-link" data-admin-view="categories">Categorias</button></li>
+    <li class="nav-item"><button class="nav-link" data-admin-view="questions">Questionário</button></li>
 </ul>
+
+<div id="admin-alert" class="alert d-none" role="alert"></div>
+
+<section id="admin-dashboard-view">
+    <div id="admin-stats" class="row g-3"></div>
+</section>
+
+<section id="admin-vehicles-view" class="d-none">
+    <div class="admin-heading">
+        <div><p class="eyebrow mb-1">Catálogo</p><h2 class="text-start mb-0">Veículos</h2></div>
+        <button class="btn btn-primary w-auto" id="new-vehicle">Novo veículo</button>
+    </div>
+    <input class="form-control mb-3" id="vehicle-search" placeholder="Buscar por marca ou modelo">
+    <div class="table-responsive admin-table-wrap">
+        <table class="table align-middle">
+            <thead><tr><th>Veículo</th><th>Categoria</th><th>Faixa</th><th>Status</th><th></th></tr></thead>
+            <tbody id="vehicles-table"></tbody>
+        </table>
+    </div>
+    <div class="admin-pagination">
+        <button class="btn btn-outline-primary w-auto" id="vehicles-prev">Anterior</button>
+        <span id="vehicles-page"></span>
+        <button class="btn btn-outline-primary w-auto" id="vehicles-next">Próxima</button>
+    </div>
+</section>
+
+<section id="admin-categories-view" class="d-none">
+    <div class="admin-heading">
+        <div><p class="eyebrow mb-1">Organização</p><h2 class="text-start mb-0">Categorias</h2></div>
+        <button class="btn btn-primary w-auto" id="new-category">Nova categoria</button>
+    </div>
+    <div class="table-responsive admin-table-wrap">
+        <table class="table align-middle">
+            <thead><tr><th>Categoria</th><th>Veículos ativos</th><th>Status</th><th></th></tr></thead>
+            <tbody id="categories-table"></tbody>
+        </table>
+    </div>
+</section>
+
+<section id="admin-questions-view" class="d-none">
+    <div class="admin-heading">
+        <div><p class="eyebrow mb-1">Motor de recomendação</p><h2 class="text-start mb-0">Perguntas e opções</h2></div>
+        <button class="btn btn-primary w-auto" id="new-question">Nova pergunta</button>
+    </div>
+    <input class="form-control mb-3" id="question-search" placeholder="Buscar pergunta">
+    <div id="questions-admin-list"></div>
+</section>
+
+<div class="modal fade" id="vehicle-form-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+        <form id="vehicle-form">
+            <div class="modal-header"><h2 class="modal-title fs-4">Veículo</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <input type="hidden" name="id">
+                <div class="row g-3">
+                    <div class="col-md-4"><label class="form-label">Marca</label><input class="form-control" name="brand" required></div>
+                    <div class="col-md-4"><label class="form-label">Modelo</label><input class="form-control" name="model" required></div>
+                    <div class="col-md-4"><label class="form-label">Versão</label><input class="form-control" name="version"></div>
+                    <div class="col-md-4"><label class="form-label">Categoria</label><select class="form-select" name="category_id" required></select></div>
+                    <div class="col-md-2"><label class="form-label">Ano</label><input class="form-control" type="number" name="year" required></div>
+                    <div class="col-md-3"><label class="form-label">Combustível</label><input class="form-control" name="fuel_type" required></div>
+                    <div class="col-md-3"><label class="form-label">Câmbio</label><input class="form-control" name="transmission" required></div>
+                    <div class="col-md-3"><label class="form-label">Preço mínimo</label><input class="form-control" type="number" name="price_min" required></div>
+                    <div class="col-md-3"><label class="form-label">Preço máximo</label><input class="form-control" type="number" name="price_max" required></div>
+                    <div class="col-md-2"><label class="form-label">Lugares</label><input class="form-control" type="number" name="seats"></div>
+                    <div class="col-md-2"><label class="form-label">Porta-malas (L)</label><input class="form-control" type="number" name="trunk_capacity"></div>
+                    <div class="col-md-2"><label class="form-label">Consumo cidade</label><input class="form-control" type="number" step="0.1" name="consumption_city"></div>
+                    <div class="col-md-2"><label class="form-label">Consumo estrada</label><input class="form-control" type="number" step="0.1" name="consumption_highway"></div>
+                    <div class="col-12"><label class="form-label">Descrição</label><textarea class="form-control" name="description"></textarea></div>
+                    <div class="col-md-6"><label class="form-label">Pontos fortes</label><textarea class="form-control" name="strengths"></textarea></div>
+                    <div class="col-md-6"><label class="form-label">Pontos de atenção</label><textarea class="form-control" name="weaknesses"></textarea></div>
+                    <div class="col-12"><label class="form-label">Perfil de compatibilidade (JSON)</label><textarea class="form-control font-monospace" rows="4" name="match_profile" required></textarea></div>
+                </div>
+            </div>
+            <div class="modal-footer"><button class="btn btn-outline-secondary w-auto" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary w-auto" type="submit">Salvar</button></div>
+        </form>
+    </div></div>
+</div>
+
+<div class="modal fade" id="category-form-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content"><form id="category-form">
+        <div class="modal-header"><h2 class="modal-title fs-4">Categoria</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" name="id">
+            <label class="form-label">Nome</label><input class="form-control mb-3" name="name" required>
+            <label class="form-label">Descrição</label><textarea class="form-control" name="description"></textarea>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline-secondary w-auto" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary w-auto" type="submit">Salvar</button></div>
+    </form></div></div>
+</div>
+
+<div class="modal fade" id="question-form-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content"><form id="question-form">
+        <div class="modal-header"><h2 class="modal-title fs-4">Pergunta</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" name="id">
+            <label class="form-label">Texto</label><textarea class="form-control mb-3" name="text" required></textarea>
+            <div class="row g-3">
+                <div class="col-6"><label class="form-label">Peso</label><input class="form-control" type="number" step="0.1" name="weight" required></div>
+                <div class="col-6"><label class="form-label">Ordem</label><input class="form-control" type="number" name="display_order" required></div>
+            </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline-secondary w-auto" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary w-auto" type="submit">Salvar</button></div>
+    </form></div></div>
+</div>
+
+<div class="modal fade" id="option-form-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog"><div class="modal-content"><form id="option-form">
+        <div class="modal-header"><h2 class="modal-title fs-4">Opção de resposta</h2><button class="btn-close" type="button" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <input type="hidden" name="question_id"><input type="hidden" name="id">
+            <label class="form-label">Texto</label><input class="form-control mb-3" name="text" required>
+            <label class="form-label">Ordem</label><input class="form-control mb-3" type="number" name="display_order" required>
+            <label class="form-label">Perfil de score (JSON)</label><textarea class="form-control font-monospace" name="score_profile" rows="4" required></textarea>
+        </div>
+        <div class="modal-footer"><button class="btn btn-outline-secondary w-auto" type="button" data-bs-dismiss="modal">Cancelar</button><button class="btn btn-primary w-auto" type="submit">Salvar</button></div>
+    </form></div></div>
+</div>
+
+<script src="/static/js/admin.js"></script>
 {{ end }}

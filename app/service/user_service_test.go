@@ -116,3 +116,101 @@ func TestUserServiceRejectsWeakPassword(t *testing.T) {
 		t.Fatal("Register() accepted a password shorter than 8 characters")
 	}
 }
+
+func TestUserServiceRejectsMismatchedPasswords(t *testing.T) {
+	service := NewUserService(&fakeUserRepository{})
+
+	_, err := service.Register(
+		context.Background(),
+		"Maria Silva",
+		"maria@example.com",
+		"senha12345",
+		"senha99999",
+	)
+	if err == nil {
+		t.Fatal("Register() accepted mismatched passwords")
+	}
+}
+
+func TestUserServiceRejectsInvalidEmail(t *testing.T) {
+	service := NewUserService(&fakeUserRepository{})
+
+	_, err := service.Register(
+		context.Background(),
+		"Maria Silva",
+		"not-an-email",
+		"senha12345",
+		"senha12345",
+	)
+	if err == nil {
+		t.Fatal("Register() accepted invalid email format")
+	}
+}
+
+func TestUserServiceLoginWrongPassword(t *testing.T) {
+	repo := &fakeUserRepository{}
+	svc := NewUserService(repo)
+
+	_, err := svc.Register(context.Background(), "Maria", "maria@example.com", "correctpass", "correctpass")
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	_, err = svc.Login(context.Background(), "maria@example.com", "wrongpass")
+	if err == nil {
+		t.Fatal("Login() accepted wrong password")
+	}
+}
+
+func TestUserServiceLoginInactiveUser(t *testing.T) {
+	repo := &fakeUserRepository{
+		user: &models.User{
+			ID:           1,
+			Email:        "inactive@example.com",
+			PasswordHash: "$2a$10$invalid",
+			Active:       false,
+		},
+	}
+	service := NewUserService(repo)
+
+	_, err := service.Login(context.Background(), "inactive@example.com", "anypassword")
+	if err == nil {
+		t.Fatal("Login() accepted inactive user")
+	}
+}
+
+func TestUserServiceLoginEmptyCredentials(t *testing.T) {
+	service := NewUserService(&fakeUserRepository{})
+
+	_, err := service.Login(context.Background(), "", "")
+	if err == nil {
+		t.Fatal("Login() accepted empty credentials")
+	}
+}
+
+func TestUserServiceGetByID(t *testing.T) {
+	repo := &fakeUserRepository{}
+	svc := NewUserService(repo)
+
+	user, err := svc.Register(context.Background(), "João", "joao@example.com", "senha12345", "senha12345")
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+
+	got, err := svc.GetByID(context.Background(), user.ID)
+	if err != nil {
+		t.Fatalf("GetByID() error = %v", err)
+	}
+	if got.Email != "joao@example.com" {
+		t.Fatalf("GetByID() email = %q, want joao@example.com", got.Email)
+	}
+}
+
+func TestIsEmailAlreadyUsed(t *testing.T) {
+	if !IsEmailAlreadyUsed(ErrEmailAlreadyUsed) {
+		t.Fatal("IsEmailAlreadyUsed() returned false for ErrEmailAlreadyUsed")
+	}
+	if IsEmailAlreadyUsed(errors.New("other error")) {
+		t.Fatal("IsEmailAlreadyUsed() returned true for unrelated error")
+	}
+}

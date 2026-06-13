@@ -3,6 +3,8 @@ $(function () {
     const form = $("#questionnaire-form");
     const submitButton = $("#generate-submit");
     const vehicleModal = new bootstrap.Modal(document.getElementById("vehicle-modal"));
+    const comparisonModal = new bootstrap.Modal(document.getElementById("comparison-modal"));
+    let currentItems = [];
 
     function showAlert(message, type) {
         alertBox
@@ -78,7 +80,8 @@ $(function () {
     }
 
     function renderRecommendation(recommendation) {
-        const cards = (recommendation.items || []).map(function (item) {
+        currentItems = recommendation.items || [];
+        const cards = currentItems.map(function (item) {
             const vehicle = item.vehicle;
             return `
                 <div class="col-12">
@@ -101,13 +104,62 @@ $(function () {
                             </div>
                             <button class="btn btn-outline-primary w-auto mt-3 vehicle-details"
                                 data-vehicle-id="${vehicle.id}">Ver detalhes</button>
+                            <label class="compare-choice mt-3">
+                                <input class="form-check-input compare-vehicle" type="checkbox"
+                                    value="${vehicle.id}">
+                                Comparar
+                            </label>
                         </div>
                     </article>
                 </div>`;
         }).join("");
         $("#recommendation-results").html(cards);
+        updateComparison();
         showView("results");
     }
+
+    function updateComparison() {
+        let selected = $(".compare-vehicle:checked");
+        if (selected.length > 3) {
+            selected.last().prop("checked", false);
+            selected = $(".compare-vehicle:checked");
+            showAlert("Compare no máximo três veículos.", "warning");
+        }
+        $("#comparison-count").text(
+            selected.length ? selected.length + " veículo(s) selecionado(s)." : "Selecione de 2 a 3 veículos para comparar."
+        );
+        $("#compare-selected").prop("disabled", selected.length < 2);
+    }
+
+    $(document).on("change", ".compare-vehicle", updateComparison);
+
+    $("#compare-selected").on("click", function () {
+        const ids = $(".compare-vehicle:checked").map(function () {
+            return Number($(this).val());
+        }).get();
+        const items = currentItems.filter(function (item) {
+            return ids.includes(item.vehicle.id);
+        });
+        const cell = function (value, best) {
+            return `<td class="${best ? "comparison-best" : ""}">${value}</td>`;
+        };
+        const highestScore = Math.max.apply(null, items.map(item => Number(item.score)));
+        const lowestPrice = Math.min.apply(null, items.map(item => Number(item.vehicle.price_min)));
+        $("#comparison-body").html(`
+            <table class="table comparison-table align-middle">
+                <thead><tr><th>Critério</th>${items.map(item => `<th>${escapeHtml(item.vehicle.brand)} ${escapeHtml(item.vehicle.model)}</th>`).join("")}</tr></thead>
+                <tbody>
+                    <tr><th>Compatibilidade</th>${items.map(item => cell(Number(item.score).toFixed(0) + "%", Number(item.score) === highestScore)).join("")}</tr>
+                    <tr><th>Preço inicial</th>${items.map(item => cell(money(item.vehicle.price_min), Number(item.vehicle.price_min) === lowestPrice)).join("")}</tr>
+                    <tr><th>Câmbio</th>${items.map(item => cell(escapeHtml(item.vehicle.transmission), false)).join("")}</tr>
+                    <tr><th>Combustível</th>${items.map(item => cell(escapeHtml(item.vehicle.fuel_type), false)).join("")}</tr>
+                    <tr><th>Lugares</th>${items.map(item => cell(item.vehicle.seats, false)).join("")}</tr>
+                    <tr><th>Porta-malas</th>${items.map(item => cell(item.vehicle.trunk_capacity + " L", false)).join("")}</tr>
+                    <tr><th>Por que combina</th>${items.map(item => cell(escapeHtml(item.reason), false)).join("")}</tr>
+                </tbody>
+            </table>`);
+        comparisonModal.show();
+    });
 
     form.on("submit", function (event) {
         event.preventDefault();
