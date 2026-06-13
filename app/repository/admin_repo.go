@@ -19,6 +19,7 @@ var (
 
 type AdminRepositoryInterface interface {
 	Stats(ctx context.Context) (*models.AdminStats, error)
+	Users(ctx context.Context, search string, limit, offset int) ([]models.User, int, error)
 	Vehicles(ctx context.Context, search string, limit, offset int) ([]models.Vehicle, int, error)
 	Vehicle(ctx context.Context, id int64) (*models.Vehicle, error)
 	CreateVehicle(ctx context.Context, vehicle *models.Vehicle) error
@@ -62,6 +63,40 @@ func (r *AdminRepository) Stats(ctx context.Context) (*models.AdminStats, error)
 		&stats.ActiveUsersWeek, &stats.NewUsersWeek,
 	)
 	return stats, err
+}
+
+func (r *AdminRepository) Users(ctx context.Context, search string, limit, offset int) ([]models.User, int, error) {
+	pattern := "%" + search + "%"
+	var total int
+	if err := r.db.QueryRowContext(ctx, `
+		SELECT COUNT(*) FROM users
+		WHERE $1='' OR name ILIKE $2 OR email ILIKE $2`, search, pattern).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	rows, err := r.db.QueryContext(ctx, `
+		SELECT id, name, email, role, active, created_at
+		FROM users
+		WHERE $1='' OR name ILIKE $2 OR email ILIKE $2
+		ORDER BY created_at DESC
+		LIMIT $3 OFFSET $4`, search, pattern, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	users := []models.User{}
+	for rows.Next() {
+		var u models.User
+		if err := rows.Scan(&u.ID, &u.Name, &u.Email, &u.Role, &u.Active, &u.CreatedAt); err != nil {
+			return nil, 0, err
+		}
+		users = append(users, u)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, 0, fmt.Errorf("list admin users: %w", err)
+	}
+	return users, total, nil
 }
 
 func (r *AdminRepository) Vehicles(ctx context.Context, search string, limit, offset int) ([]models.Vehicle, int, error) {

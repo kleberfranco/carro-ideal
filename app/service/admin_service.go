@@ -29,6 +29,19 @@ func (s *AdminService) Stats(ctx context.Context) (*models.AdminStats, error) {
 	return s.repo.Stats(ctx)
 }
 
+func (s *AdminService) Users(ctx context.Context, search string, page, limit int) ([]models.User, int, error) {
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
+	return s.repo.Users(ctx, strings.TrimSpace(search), limit, (page-1)*limit)
+}
+
 func (s *AdminService) Vehicles(ctx context.Context, search string, page, limit int) ([]models.Vehicle, int, error) {
 	if page < 1 {
 		page = 1

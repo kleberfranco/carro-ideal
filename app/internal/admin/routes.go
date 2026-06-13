@@ -6,6 +6,7 @@ import (
 
 func RegisterRoutes(r chi.Router, h *Handler) {
 	r.Get("/dashboard", h.Dashboard)
+	r.Get("/users", h.Users)
 	r.Get("/vehicles", h.Vehicles)
 	r.Post("/vehicles", h.CreateVehicle)
 	r.Put("/vehicles/{id}", h.UpdateVehicle)

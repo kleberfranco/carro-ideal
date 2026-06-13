@@ -6,7 +6,12 @@ $(function () {
         vehiclePage: 1,
         vehicleLimit: 10,
         vehicleTotal: 0,
-        vehicleSearch: ""
+        vehicleSearch: "",
+        users: [],
+        userPage: 1,
+        userLimit: 10,
+        userTotal: 0,
+        userSearch: ""
     };
     const vehicleModal = new bootstrap.Modal("#vehicle-form-modal");
     const categoryModal = new bootstrap.Modal("#category-form-modal");
@@ -40,9 +45,42 @@ $(function () {
         $("#admin-tabs .nav-link").removeClass("active");
         $('#admin-tabs [data-admin-view="' + view + '"]').addClass("active");
         if (view === "dashboard") loadDashboard();
+        if (view === "users") loadUsers();
         if (view === "vehicles") loadVehicles();
         if (view === "categories") loadCategories();
         if (view === "questions") loadQuestions();
+    }
+
+    function roleBadge(role) {
+        return role === "admin"
+            ? '<span class="badge text-bg-primary">Admin</span>'
+            : '<span class="badge text-bg-secondary">Usuário</span>';
+    }
+
+    function loadUsers() {
+        const query = $.param({
+            page: state.userPage,
+            limit: state.userLimit,
+            search: state.userSearch
+        });
+        request({url: "/api/admin/users?" + query}).done(function (response) {
+            state.users = response.data.items || [];
+            state.userTotal = response.data.total;
+            $("#users-table").html(state.users.map(function (user) {
+                const date = new Date(user.created_at).toLocaleDateString("pt-BR");
+                return `<tr>
+                    <td><strong>${escapeHtml(user.name)}</strong></td>
+                    <td>${escapeHtml(user.email)}</td>
+                    <td>${roleBadge(user.role)}</td>
+                    <td>${statusBadge(user.active)}</td>
+                    <td>${date}</td>
+                </tr>`;
+            }).join(""));
+            const totalPages = Math.max(1, Math.ceil(state.userTotal / state.userLimit));
+            $("#users-page").text("Página " + state.userPage + " de " + totalPages);
+            $("#users-prev").prop("disabled", state.userPage <= 1);
+            $("#users-next").prop("disabled", state.userPage >= totalPages);
+        });
     }
 
     function loadDashboard() {
@@ -177,6 +215,28 @@ $(function () {
         if (state.vehiclePage * state.vehicleLimit < state.vehicleTotal) {
             state.vehiclePage += 1;
             loadVehicles();
+        }
+    });
+
+    let userSearchTimer;
+    $("#user-search").on("input", function () {
+        clearTimeout(userSearchTimer);
+        state.userSearch = $(this).val();
+        state.userPage = 1;
+        userSearchTimer = setTimeout(loadUsers, 250);
+    });
+
+    $("#users-prev").on("click", function () {
+        if (state.userPage > 1) {
+            state.userPage -= 1;
+            loadUsers();
+        }
+    });
+
+    $("#users-next").on("click", function () {
+        if (state.userPage * state.userLimit < state.userTotal) {
+            state.userPage += 1;
+            loadUsers();
         }
     });
 

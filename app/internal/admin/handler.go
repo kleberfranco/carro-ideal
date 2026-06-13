@@ -80,6 +80,22 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusOK, stats)
 }
 
+func (h *Handler) Users(w http.ResponseWriter, r *http.Request) {
+	page := queryInt(r, "page", 1)
+	limit := queryInt(r, "limit", 10)
+	items, total, err := h.AdminService.Users(r.Context(), r.URL.Query().Get("search"), page, limit)
+	if err != nil {
+		adminError(w, err)
+		return
+	}
+	response.JSON(w, http.StatusOK, map[string]interface{}{
+		"items": items,
+		"total": total,
+		"page":  page,
+		"limit": limit,
+	})
+}
+
 func (h *Handler) Vehicles(w http.ResponseWriter, r *http.Request) {
 	page := queryInt(r, "page", 1)
 	limit := queryInt(r, "limit", 10)

@@ -7,6 +7,7 @@
 
 <ul class="nav nav-pills mb-4" id="admin-tabs">
     <li class="nav-item"><button class="nav-link active" data-admin-view="dashboard">Visão geral</button></li>
+    <li class="nav-item"><button class="nav-link" data-admin-view="users">Usuários</button></li>
     <li class="nav-item"><button class="nav-link" data-admin-view="vehicles">Veículos</button></li>
     <li class="nav-item"><button class="nav-link" data-admin-view="categories">Categorias</button></li>
     <li class="nav-item"><button class="nav-link" data-admin-view="questions">Questionário</button></li>
@@ -16,6 +17,24 @@
 
 <section id="admin-dashboard-view">
     <div id="admin-stats" class="row g-3"></div>
+</section>
+
+<section id="admin-users-view" class="d-none">
+    <div class="admin-heading">
+        <div><p class="eyebrow mb-1">Pessoas</p><h2 class="text-start mb-0">Usuários</h2></div>
+    </div>
+    <input class="form-control mb-3" id="user-search" placeholder="Buscar por nome ou e-mail">
+    <div class="table-responsive admin-table-wrap">
+        <table class="table align-middle">
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Status</th><th>Cadastro</th></tr></thead>
+            <tbody id="users-table"></tbody>
+        </table>
+    </div>
+    <div class="admin-pagination">
+        <button class="btn btn-outline-primary w-auto" id="users-prev">Anterior</button>
+        <span id="users-page"></span>
+        <button class="btn btn-outline-primary w-auto" id="users-next">Próxima</button>
+    </div>
 </section>
 
 <section id="admin-vehicles-view" class="d-none">

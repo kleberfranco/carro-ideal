@@ -12,6 +12,7 @@ import (
 )
 
 type fakeAdminRepository struct {
+	users      []models.User
 	vehicles   []models.Vehicle
 	vehicle    *models.Vehicle
 	categories []models.VehicleCategory
@@ -28,6 +29,10 @@ type fakeAdminRepository struct {
 
 func (r *fakeAdminRepository) Stats(_ context.Context) (*models.AdminStats, error) {
 	return &models.AdminStats{Users: 10, Vehicles: 5}, nil
+}
+
+func (r *fakeAdminRepository) Users(_ context.Context, _ string, limit, offset int) ([]models.User, int, error) {
+	return r.users, len(r.users), nil
 }
 
 func (r *fakeAdminRepository) Vehicles(_ context.Context, _ string, limit, offset int) ([]models.Vehicle, int, error) {
