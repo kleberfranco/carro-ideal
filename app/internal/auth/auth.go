@@ -2,42 +2,41 @@ package auth
 
 import (
 	"net/http"
-	"strconv"
+	"time"
 )
 
 const cookieName = "carro_session"
 
-func SetUserSession(w http.ResponseWriter, userID int64) {
+func SetSessionCookie(w http.ResponseWriter, token string, expiresAt time.Time, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     cookieName,
-		Value:    strconv.FormatInt(userID, 10),
+		Value:    token,
 		Path:     "/",
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
+		Expires:  expiresAt,
+		MaxAge:   int(time.Until(expiresAt).Seconds()),
 	})
 }
 
-func ClearUserSession(w http.ResponseWriter) {
+func ClearSessionCookie(w http.ResponseWriter, secure bool) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     cookieName,
 		Value:    "",
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   secure,
 		SameSite: http.SameSiteLaxMode,
 	})
 }
 
-func GetUserID(r *http.Request) (int64, bool) {
+func SessionToken(r *http.Request) (string, bool) {
 	c, err := r.Cookie(cookieName)
 	if err != nil || c.Value == "" {
-		return 0, false
+		return "", false
 	}
 
-	id, err := strconv.ParseInt(c.Value, 10, 64)
-	if err != nil {
-		return 0, false
-	}
-
-	return id, true
+	return c.Value, true
 }

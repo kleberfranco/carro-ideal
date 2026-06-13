@@ -12,6 +12,8 @@ type UserRepository interface {
 	Create(ctx context.Context, u *models.User) error
 	GetByEmail(ctx context.Context, email string) (*models.User, error)
 	GetByID(ctx context.Context, id int64) (*models.User, error)
+	Update(ctx context.Context, u *models.User) error
+	Deactivate(ctx context.Context, id int64) error
 }
 
 type userRepository struct {
@@ -65,4 +67,24 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*models.User, e
 	}
 
 	return user, nil
+}
+
+func (r *userRepository) Update(ctx context.Context, u *models.User) error {
+	return r.db.QueryRowContext(
+		ctx,
+		`UPDATE users
+		 SET name=$1, email=$2, role=$3, active=$4, updated_at=NOW()
+		 WHERE id=$5
+		 RETURNING updated_at`,
+		u.Name, u.Email, u.Role, u.Active, u.ID,
+	).Scan(&u.UpdatedAt)
+}
+
+func (r *userRepository) Deactivate(ctx context.Context, id int64) error {
+	_, err := r.db.ExecContext(
+		ctx,
+		"UPDATE users SET active=false, updated_at=NOW() WHERE id=$1",
+		id,
+	)
+	return err
 }

@@ -7,7 +7,7 @@ import (
 )
 
 func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	if _, ok := auth.GetUserID(r); ok {
+	if h.authenticated(r) {
 		http.Redirect(w, r, "/recommend", http.StatusSeeOther)
 		return
 	}
@@ -19,7 +19,7 @@ func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	if _, ok := auth.GetUserID(r); ok {
+	if h.authenticated(r) {
 		http.Redirect(w, r, "/recommend", http.StatusSeeOther)
 		return
 	}
@@ -31,6 +31,9 @@ func (h *Handler) RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	auth.ClearUserSession(w)
+	if token, ok := auth.SessionToken(r); ok {
+		_ = h.AuthService.DestroySession(r.Context(), token)
+	}
+	auth.ClearSessionCookie(w, h.SecureCookie)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

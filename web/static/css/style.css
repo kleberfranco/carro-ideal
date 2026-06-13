@@ -1,109 +1,231 @@
+:root {
+    --ink: #172033;
+    --muted: #64748b;
+    --primary: #155eef;
+    --primary-dark: #0d47c1;
+    --surface: #ffffff;
+    --background: #f3f6fb;
+    --border: #dbe3ef;
+}
+
 * {
     box-sizing: border-box;
 }
 
 body {
+    min-height: 100vh;
     margin: 0;
-    padding: 40px;
-    background: #f7f7f7;
-    font-family: Arial, sans-serif;
+    background:
+        radial-gradient(circle at top right, rgba(21, 94, 239, 0.12), transparent 32rem),
+        var(--background);
+    color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
-.container {
-    max-width: 500px;
-    margin: auto;
-    background: #fff;
-    padding: 32px;
-    border-radius: 10px;
-    box-shadow: 0 0 14px rgba(0, 0, 0, 0.1);
+body > .container {
+    max-width: 980px;
 }
 
 h1,
-h2 {
-    margin-top: 0;
-    text-align: center;
+h2,
+h3 {
+    letter-spacing: -0.025em;
 }
 
-p {
-    margin-top: 0;
-    line-height: 1.5;
+.navbar-brand {
+    font-weight: 800;
 }
 
-input,
-select,
-button {
-    width: 100%;
-    padding: 12px;
-    margin-top: 12px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 14px;
+.hero-panel,
+.question-card,
+.vehicle-card,
+.empty-state {
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.92);
+    box-shadow: 0 18px 50px rgba(31, 51, 82, 0.08);
 }
 
-button {
-    background: #4A90E2;
-    color: #fff;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background 0.2s ease;
+.hero-panel {
+    padding: clamp(1.5rem, 4vw, 3rem);
 }
 
-button:hover {
-    background: #357ABD;
+.hero-panel h1 {
+    max-width: 720px;
+    font-size: clamp(2rem, 5vw, 3.75rem);
 }
 
-a {
-    display: block;
-    margin-top: 16px;
-    text-align: center;
-    text-decoration: none;
-    color: #4A90E2;
-    font-size: 14px;
+.eyebrow,
+.vehicle-category {
+    margin: 0 0 0.35rem;
+    color: var(--primary);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
 
-a:hover {
-    text-decoration: underline;
+.question-card {
+    margin-bottom: 1rem;
+    padding: 1.35rem;
 }
 
-.error {
-    margin-top: 8px;
-    color: #d00000;
-    font-size: 14px;
+.question-card legend {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 750;
 }
 
-.success {
-    margin-top: 8px;
-    color: #2e7d32;
-    font-size: 14px;
-}
-
-#register-submit.button-loading {
-    position: relative;
-    color: transparent;
-    cursor: wait;
-}
-
-#register-submit.button-loading::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 18px;
-    height: 18px;
-    margin-top: -9px;
-    margin-left: -9px;
+.question-number,
+.rank-badge {
+    display: grid;
+    flex: 0 0 auto;
+    width: 2.25rem;
+    height: 2.25rem;
+    place-items: center;
     border-radius: 50%;
-    border: 2px solid #ffffff;
-    border-top-color: transparent;
-    animation: button-spinner 0.6s linear infinite;
+    background: var(--primary);
+    color: white;
+    font-weight: 800;
 }
 
-@keyframes button-spinner {
-    from {
-        transform: rotate(0deg);
+.answer-grid {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.answer-option {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 0.85rem;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+}
+
+.answer-option:hover {
+    border-color: var(--primary);
+    background: #f6f9ff;
+}
+
+.answer-option:has(input:checked) {
+    border-color: var(--primary);
+    background: #edf4ff;
+}
+
+.vehicle-card {
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+}
+
+.vehicle-main {
+    min-width: 0;
+    flex: 1;
+}
+
+.vehicle-main h3 {
+    margin: 0;
+}
+
+.score-ring {
+    display: grid;
+    width: 4.5rem;
+    height: 4.5rem;
+    place-items: center;
+    border: 0.4rem solid #dce8ff;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    color: var(--primary-dark);
+    font-size: 1.25rem;
+    font-weight: 850;
+}
+
+.score-ring small {
+    margin-left: -0.8rem;
+    font-size: 0.65rem;
+    transform: translate(1.35rem, -1.2rem);
+}
+
+.reason {
+    margin: 0.75rem 0;
+    color: #34445f;
+}
+
+.vehicle-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.vehicle-facts span {
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: #edf2f8;
+    color: #44536c;
+    font-size: 0.85rem;
+}
+
+.history-item {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding: 1rem 1.15rem;
+    border: 1px solid var(--border);
+    border-radius: 0.9rem;
+    background: var(--surface);
+    color: var(--ink);
+    text-align: left;
+}
+
+.history-item small {
+    display: block;
+    color: var(--muted);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+.detail-grid div {
+    padding: 0.85rem;
+    border-radius: 0.75rem;
+    background: #f3f6fb;
+}
+
+.detail-grid small,
+.detail-grid strong {
+    display: block;
+}
+
+.empty-state {
+    padding: 2rem;
+    color: var(--muted);
+    text-align: center;
+}
+
+.button-loading {
+    cursor: wait;
+    opacity: 0.7;
+}
+
+@media (max-width: 640px) {
+    .vehicle-card {
+        flex-direction: column;
     }
-    to {
-        transform: rotate(360deg);
+
+    .history-item {
+        align-items: flex-start;
+        gap: 0.75rem;
+        flex-direction: column;
     }
 }

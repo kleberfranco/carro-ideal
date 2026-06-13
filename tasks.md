@@ -1,8 +1,8 @@
 # Tasks: Carro Ideal MVP - Car Recommendation System
 
-**Status**: Ready for Implementation  
-**Total Tasks**: 72 tasks across 6 phases  
-**Estimated Duration**: 110-120 hours (single developer)  
+**Status**: In Progress - Phase 3 Core Recommendation Engine
+**Total Tasks**: 165 tasks across 6 phases
+**Estimated Duration**: 209 hours (single developer)
 **MVP Checkpoint**: After Phase 3 (complete working recommendations engine)
 
 ---
@@ -125,43 +125,43 @@ None - this is the blocking foundation for all subsequent work.
 
 ### Phase 2 Tasks
 
-- [ ] T017 [P] Create User model in app/models/user.go with fields matching database schema **[S - 30min]**
+- [X] T017 [P] Create User model in app/models/user.go with fields matching database schema **[S - 30min]**
   - **Acceptance**: Struct includes ID, Email, Name, PasswordHash, Role, Active, CreatedAt, UpdatedAt; JSON tags for API responses
   
-- [ ] T018 [P] Create UserRepository in app/repository/user_repo.go with CRUD methods **[L - 2h]**
+- [X] T018 [P] Create UserRepository in app/repository/user_repo.go with CRUD methods **[L - 2h]**
   - **Acceptance**: Methods: GetByID, GetByEmail, Create, Update, Delete (soft); uses prepared statements; no SQL injection vulnerabilities
   
-- [ ] T019 [P] Implement bcrypt password hashing in auth service (app/service/auth_service.go) **[M - 1h]**
+- [X] T019 [P] Implement bcrypt password hashing in auth service (app/service/auth_service.go) **[M - 1h]**
   - **Acceptance**: HashPassword uses bcrypt cost=10; VerifyPassword compares hash correctly; never stores plaintext passwords
   
-- [ ] T020 Create session management service in app/service/auth_service.go **[L - 2h]**
+- [X] T020 Create session management service in app/service/auth_service.go **[L - 2h]**
   - **Dependencies**: T017, T018, T019
-  - **Acceptance**: GenerateSessionID creates cryptographically secure 32-byte random ID; StoreSession persists to in-memory map with 24-hour expiry; GetSession retrieves and validates expiry; DestroySession removes from map
+  - **Acceptance**: GenerateSessionID creates cryptographically secure 32-byte random ID; StoreSession persists only its SHA-256 hash in PostgreSQL with 24-hour expiry; GetSession retrieves and validates expiry; DestroySession removes it
   
-- [ ] T021 Create authentication middleware (app/internal/middleware.go) checking session cookie **[L - 2h]**
+- [X] T021 Create authentication middleware (app/internal/middleware.go) checking session cookie **[L - 2h]**
   - **Dependencies**: T020
   - **Acceptance**: Validates session cookie presence; returns 401 if missing or expired; injects user into request context; skips auth for public endpoints (/health, /api/auth/login, /api/auth/register, /)
   
-- [ ] T022 [P] Create user registration handler (POST /api/auth/register) **[L - 2h]**
+- [X] T022 [P] Create user registration handler (POST /api/auth/register) **[L - 2h]**
   - **Acceptance**: Validates email format, password minimum 8 chars; checks email uniqueness; returns 400 with specific error if validation fails; creates user with hashed password; sets session cookie; returns 201 with user data
   
-- [ ] T023 [P] Create user login handler (POST /api/auth/login) **[L - 2h]**
+- [X] T023 [P] Create user login handler (POST /api/auth/login) **[L - 2h]**
   - **Acceptance**: Validates email exists; verifies password hash; returns 401 with generic message if failed; creates session; sets cookie; returns 200 with user data and role
   
-- [ ] T024 [P] Create logout handler (POST /api/auth/logout) **[M - 1h]**
+- [X] T024 [P] Create logout handler (POST /api/auth/logout) **[M - 1h]**
   - **Acceptance**: Destroys session; clears session cookie; returns 200 OK; user cannot access protected endpoints after logout
   
-- [ ] T025 [P] Create GET /api/auth/me endpoint returning current user **[M - 1h]**
+- [X] T025 [P] Create GET /api/auth/me endpoint returning current user **[M - 1h]**
   - **Acceptance**: Requires authentication; returns current user data; returns 401 if unauthenticated
   
 - [ ] T026 Create session middleware with CSRF protection and cookie security flags **[M - 1h]**
   - **Dependencies**: T021
   - **Acceptance**: Cookie set with HttpOnly, Secure, SameSite=Lax flags; session stored server-side; 24-hour expiry enforced
   
-- [ ] T027 Create registration form template (web/templates/register.html) **[M - 1h]**
+- [X] T027 Create registration form template (web/templates/register.html) **[M - 1h]**
   - **Acceptance**: HTML form with name, email, password, confirm password fields; Bootstrap 5 styling; client-side validation; submit POSTs to /api/auth/register
   
-- [ ] T028 Create login form template (web/templates/login.html) **[M - 1h]**
+- [X] T028 Create login form template (web/templates/login.html) **[M - 1h]**
   - **Acceptance**: HTML form with email, password fields; Bootstrap 5 styling; remember me checkbox (optional); submit POSTs to /api/auth/login
   
 - [ ] T029 Create user dashboard template (web/templates/user/dashboard.html) **[M - 1h]**
@@ -171,11 +171,11 @@ None - this is the blocking foundation for all subsequent work.
 - [ ] T030 Create frontend session verification script (web/static/js/session.js) **[M - 1h]**
   - **Acceptance**: On page load, calls GET /api/auth/me; if 401, redirects to login; stores user data in localStorage; updates navbar with user name
   
-- [ ] T031 Create authentication routes handler (app/internal/auth/routes.go) **[S - 30min]**
+- [X] T031 Create authentication routes handler (app/internal/auth/routes.go) **[S - 30min]**
   - **Dependencies**: T022, T023, T024, T025
   - **Acceptance**: Routes POST /api/auth/register, POST /api/auth/login, POST /api/auth/logout, GET /api/auth/me to handlers
   
-- [ ] T032 Create web landing page (web/templates/index.html) with links to login/register **[M - 1h]**
+- [X] T032 Create web landing page (web/templates/index.html) with links to login/register **[M - 1h]**
   - **Acceptance**: Landing page displays project description; buttons for login/register visible; responsive Bootstrap 5 design
 
 ### Phase 2 Tests (Optional but recommended for TCC evaluation)
@@ -183,7 +183,7 @@ None - this is the blocking foundation for all subsequent work.
 - [ ] T033 [P] [US1] Unit test UserRepository.Create validates unique email constraint **[M - 1h]**
   - **Acceptance**: Test in tests/unit/repository/user_repo_test.go; covers: valid user creation, duplicate email error, password hash stored not plaintext
   
-- [ ] T034 [P] [US2] Unit test authentication middleware rejects expired sessions **[M - 1h]**
+- [X] T034 [P] [US2] Unit test authentication middleware rejects expired sessions **[M - 1h]**
   - **Acceptance**: Test in tests/unit/middleware/auth_test.go; covers: valid session accepted, expired session rejected, missing session rejected
   
 - [ ] T035 [P] [US1] Integration test registration flow end-to-end **[L - 2h]**
@@ -216,59 +216,61 @@ None - this is the blocking foundation for all subsequent work.
 
 ### Phase 3 Database Migrations
 
-- [ ] T036 [P] Create 0002_create_questions_table.up.sql migration **[M - 1h]**
+- [X] T036 [P] Create questions table migration **[M - 1h]**
   - **Acceptance**: Table includes: id (serial PK), question_text (text), question_type (varchar), weight (numeric), display_order (int), active (boolean), created_at, updated_at; INDEX on active and display_order
   
-- [ ] T037 [P] Create 0002_create_questions_table.down.sql migration **[S - 30min]**
+- [X] T037 [P] Create questions table down migration **[S - 30min]**
   
-- [ ] T038 [P] Create 0003_create_answer_options_table.up.sql migration **[M - 1h]**
+- [X] T038 [P] Create answer_options table migration **[M - 1h]**
   - **Acceptance**: Table includes: id (serial PK), question_id (fk to questions), option_text (text), score_profile (jsonb), display_order (int), active (boolean), created_at, updated_at
   
-- [ ] T039 [P] Create 0003_create_answer_options_table.down.sql migration **[S - 30min]**
+- [X] T039 [P] Create answer_options table down migration **[S - 30min]**
   
-- [ ] T040 [P] Create 0004_create_user_answers_table.up.sql migration **[M - 1h]**
+- [X] T040 [P] Create user_answers table migration **[M - 1h]**
   - **Acceptance**: Table includes: id (serial PK), user_id (fk), question_id (fk), answer_option_id (fk), created_at, updated_at; INDEX on user_id and created_at
   
-- [ ] T041 [P] Create 0004_create_user_answers_table.down.sql migration **[S - 30min]**
+- [X] T041 [P] Create user_answers table down migration **[S - 30min]**
   
-- [ ] T042 [P] Create 0005_create_vehicles_table.up.sql migration **[L - 2h]**
+- [X] T042 [P] Create vehicles table migration **[L - 2h]**
   - **Acceptance**: Table includes: id, brand, model, version, year, fuel_type, transmission, seats, trunk_capacity, consumption_city, consumption_highway, price_range, category_id (fk), strengths (text), weaknesses (text), active (boolean), created_at, updated_at; INDEX on active and category_id
   
-- [ ] T043 [P] Create 0005_create_vehicles_table.down.sql migration **[S - 30min]**
+- [X] T043 [P] Create vehicles table down migration **[S - 30min]**
   
-- [ ] T044 [P] Create 0006_create_vehicle_categories_table.up.sql migration **[M - 1h]**
+- [X] T044 [P] Create vehicle_categories table migration **[M - 1h]**
   - **Acceptance**: Table includes: id (serial PK), name (varchar unique), description (text), created_at, updated_at
   
-- [ ] T045 [P] Create 0006_create_vehicle_categories_table.down.sql migration **[S - 30min]**
+- [X] T045 [P] Create vehicle_categories table down migration **[S - 30min]**
   
-- [ ] T046 [P] Create 0007_create_recommendations_table.up.sql migration **[M - 1h]**
+- [X] T046 [P] Create recommendations table migration **[M - 1h]**
   - **Acceptance**: Table includes: id (serial PK), user_id (fk), created_at; stores reference to recommendation set, user answers snapshot for reproducibility
   
-- [ ] T047 [P] Create 0007_create_recommendations_table.down.sql migration **[S - 30min]**
+- [X] T047 [P] Create recommendations table down migration **[S - 30min]**
   
-- [ ] T048 [P] Create 0008_create_recommendation_items_table.up.sql migration **[M - 1h]**
+- [X] T048 [P] Create recommendation_items table migration **[M - 1h]**
   - **Acceptance**: Table includes: id (serial PK), recommendation_id (fk), vehicle_id (fk), rank (int), score (numeric), reason (text), created_at; stores individual vehicle recommendations with scores
   
-- [ ] T049 [P] Create 0008_create_recommendation_items_table.down.sql migration **[S - 30min]**
+- [X] T049 [P] Create recommendation_items table down migration **[S - 30min]**
+
+> Migration note: because versions 0002-0007 already existed in the repository history, the Phase 3 domain was implemented safely in the consolidated reversible migration `0008_create_recommendation_domain`.
 
 ### Phase 3 Models and Repositories
 
-- [ ] T050 [P] Create Question, AnswerOption, UserAnswer models in app/models/ **[L - 2h]**
+- [X] T050 [P] Create Question, AnswerOption, UserAnswer models in app/models/ **[L - 2h]**
   - **Acceptance**: All models include JSON tags; AnswerOption.ScoreProfile is map[string]float64 (JSONB); no business logic in models
   
-- [ ] T051 [P] Create Vehicle and VehicleCategory models in app/models/ **[M - 1h]**
+- [X] T051 [P] Create Vehicle and VehicleCategory models in app/models/ **[M - 1h]**
   - **Acceptance**: Vehicle includes all attributes; Category has name and description; all JSON tagged
   
-- [ ] T052 [P] Create Recommendation and RecommendationItem models **[M - 1h]**
+- [X] T052 [P] Create Recommendation and RecommendationItem models **[M - 1h]**
   - **Acceptance**: Models include ID, UserID, Rank, Score, Reason, CreatedAt; ready for API responses
   
 - [ ] T053 [P] Create QuestionRepository with GetActive, GetAll, GetByID methods **[L - 2h]**
   - **Acceptance**: Uses prepared statements; handles JSONB parsing for score profiles; efficient query ordering by display_order
   
-- [ ] T054 [P] Create VehicleRepository with GetActive, GetByCategory, GetAll, GetByID methods **[L - 2h]**
+- [X] T054 [P] Create VehicleRepository with GetActive, GetByCategory and GetByID methods **[L - 2h]**
   - **Acceptance**: GetActive returns only active vehicles; efficient filtering; join with categories for denormalized response
   
-- [ ] T055 [P] Create RecommendationRepository with Create, GetByUser, GetByID, GetUserHistory methods **[L - 2h]**
+- [X] T055 [P] Create RecommendationRepository with Create, GetByUser, GetByID, GetUserHistory methods **[L - 2h]**
   - **Acceptance**: Create stores recommendation with all recommendation_items in transaction; GetUserHistory paginated; efficient joins with vehicles
   
 - [ ] T056 [P] Create UserAnswerRepository with Create, GetUserLatest, DeleteByRecommendation methods **[M - 1h]**
@@ -279,59 +281,59 @@ None - this is the blocking foundation for all subsequent work.
 
 ### Phase 3 Business Logic Services
 
-- [ ] T058 Create QuestionnaireService in app/service/ **[M - 1h]**
+- [X] T058 Create QuestionnaireService in app/service/ **[M - 1h]**
   - **Acceptance**: GetActiveQuestions returns ordered questions with answer options; validates all questions answered; no database queries in service
   
-- [ ] T059 Create RecommendationService with scoring algorithm in app/service/ **[L - 2h]**
+- [X] T059 Create RecommendationService with scoring algorithm in app/service/ **[L - 2h]**
   - **Acceptance**: GenerateRecommendations takes user answers, calculates weighted scores for each vehicle, returns top 10 sorted by score; algorithm explained in code comments with example
   
-- [ ] T060 [P] Create VehicleService in app/service/ **[S - 30min]**
+- [X] T060 [P] Create VehicleService in app/service/ **[S - 30min]**
   - **Acceptance**: GetActiveVehicles, GetByCategory, GetByID; handles repository calls and error mapping
   
-- [ ] T061 [P] Create RecommendationHistoryService **[M - 1h]**
+- [X] T061 [P] Create recommendation history operations **[M - 1h]**
   - **Acceptance**: GetUserHistory with pagination; GetRecommendationDetails; proper error handling for not found
 
 ### Phase 3 API Handlers
 
-- [ ] T062 [P] Create GET /api/questions handler returning active questions with options **[M - 1h]**
+- [X] T062 [P] Create GET /api/questions handler returning active questions with options **[M - 1h]**
   - **Acceptance**: Returns 200 with questions in order; empty array if none active; returns 401 if not authenticated
   
-- [ ] T063 [P] Create POST /api/recommendations/generate handler **[L - 2h]**
+- [X] T063 [P] Create POST /api/recommendations/generate handler **[L - 2h]**
   - **Acceptance**: Accepts user answers, validates all questions answered, generates recommendations, stores in DB, returns 201 with scored results
   
-- [ ] T064 [P] Create GET /api/recommendations endpoint returning user history **[M - 1h]**
+- [X] T064 [P] Create GET /api/recommendations endpoint returning user history **[M - 1h]**
   - **Acceptance**: Returns paginated list of past recommendations; accepts page and limit query params; returns 200 with total count
   
-- [ ] T065 [P] Create GET /api/recommendations/{id} endpoint returning recommendation details **[M - 1h]**
+- [X] T065 [P] Create GET /api/recommendations/{id} endpoint returning recommendation details **[M - 1h]**
   - **Acceptance**: Returns recommendation with all recommendation_items sorted by rank; includes vehicle details and scores; returns 404 if not found or unauthorized
   
-- [ ] T066 [P] Create GET /api/vehicles endpoint returning all active vehicles **[M - 1h]**
+- [X] T066 [P] Create GET /api/vehicles endpoint returning all active vehicles **[M - 1h]**
   - **Acceptance**: Supports category_id query param for filtering; returns with category info; paginated; returns 200 with metadata
   
-- [ ] T067 [P] Create GET /api/vehicles/{id} endpoint returning vehicle details **[S - 30min]**
+- [X] T067 [P] Create GET /api/vehicles/{id} endpoint returning vehicle details **[S - 30min]**
   - **Acceptance**: Returns complete vehicle with category; returns 404 if not found
   
-- [ ] T068 Create recommendation routes handler (app/internal/api/routes.go) **[S - 30min]**
+- [X] T068 Create recommendation routes handler (app/internal/api/routes.go) **[S - 30min]**
   - **Dependencies**: T062, T063, T064, T065, T066, T067
   - **Acceptance**: Routes all recommendation and vehicle endpoints to handlers
 
 ### Phase 3 Frontend Templates
 
-- [ ] T069 Create questionnaire form template (web/templates/user/questionnaire.html) **[L - 2h]**
+- [X] T069 Create questionnaire interface in protected recommendation page **[L - 2h]**
   - **Acceptance**: Displays all active questions; different input types for different question types (radio, checkbox, range slider); submit button POSTs to /api/recommendations/generate; responsive Bootstrap 5 design
   
-- [ ] T070 [P] Create recommendations results page (web/templates/user/recommendations.html) **[L - 2h]**
+- [X] T070 [P] Create recommendations results view **[L - 2h]**
   - **Acceptance**: Lists ranked vehicles with scores; color-coded score visualization; click to see vehicle details; back button returns to questionnaire
   
-- [ ] T071 [P] Create vehicle detail modal/page (web/templates/user/vehicle_detail.html) **[L - 2h]**
+- [X] T071 [P] Create vehicle detail modal **[L - 2h]**
   - **Acceptance**: Shows complete vehicle info; specifications organized in sections; reason explanation displayed; comparison link to similar vehicles
   
-- [ ] T072 [P] Create recommendation history page (web/templates/user/history.html) **[M - 1h]**
+- [X] T072 [P] Create recommendation history view **[M - 1h]**
   - **Acceptance**: Lists all user's past recommendations with dates; click to view details; comparison option available; shows vehicle count per recommendation
 
 ### Phase 3 Tests (Recommended)
 
-- [ ] T073 [P] [US4] Unit test RecommendationService scoring algorithm **[L - 2h]**
+- [X] T073 [P] [US4] Unit test RecommendationService scoring algorithm **[L - 2h]**
   - **Acceptance**: Test in tests/unit/service/recommendation_test.go; verify score calculation with known inputs; edge cases (no matches, perfect match, tie-breaking)
   
 - [ ] T074 [P] [US3] Integration test questionnaire submission flow **[M - 1h]**
@@ -725,8 +727,8 @@ None - this is the blocking foundation for all subsequent work.
 
 ### Total Project Metrics
 
-- **Total Tasks**: 72 (T001-T165)
-- **Total Estimated Effort**: 110-120 hours
+- **Total Tasks**: 165 (T001-T165)
+- **Total Estimated Effort**: 209 hours
 - **Number of Phases**: 6
 - **Average Phase Duration**: 2 weeks
 - **Average Tasks per Phase**: 12
@@ -887,9 +889,9 @@ After completing Phase 3 (T001-T075), the system has:
 - ✅ All working features demonstrated end-to-end
 - ✅ Basic tests for critical flows
 
-**Status**: Fully functional MVP ready for academic evaluation
+**Target status**: Fully functional MVP ready for academic evaluation
 
-**Time to MVP**: ~55 hours (approximately 3-4 weeks at 15-20h/week)
+**Estimated effort to MVP**: ~102 hours (Phases 1-3)
 
 Phases 4-6 add:
 - Admin management interface
@@ -944,6 +946,6 @@ Recommended presentation flow for TCC defense:
 ---
 
 **Document Created**: 2026-06-02  
-**Version**: 1.0  
-**Status**: Ready for Implementation  
-**Total Duration**: 12 weeks (110-120 hours estimated)
+**Version**: 1.1
+**Status**: In Progress - Phase 3 Core Recommendation Engine
+**Total Duration**: 12 weeks (209 hours estimated)

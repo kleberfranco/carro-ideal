@@ -2,12 +2,10 @@ package web
 
 import (
 	"net/http"
-
-	"carro-ideal/app/internal/auth"
 )
 
 func (h *Handler) RecommendHandler(w http.ResponseWriter, r *http.Request) {
-	if _, ok := auth.GetUserID(r); !ok {
+	if !h.authenticated(r) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}

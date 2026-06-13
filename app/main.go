@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -38,10 +39,26 @@ func main() {
 	}
 
 	userRepo := repository.NewUserRepository(db.GetDB())
+	sessionRepo := repository.NewSessionRepository(db.GetDB())
+	questionRepo := repository.NewQuestionRepository(db.GetDB())
+	vehicleRepo := repository.NewVehicleRepository(db.GetDB())
+	recommendationRepo := repository.NewRecommendationRepository(db.GetDB())
 	userService := service.NewUserService(userRepo)
+	authService := service.NewAuthService(sessionRepo)
+	questionnaireService := service.NewQuestionnaireService(questionRepo)
+	vehicleService := service.NewVehicleService(vehicleRepo)
+	recommendationService := service.NewRecommendationService(questionRepo, vehicleRepo, recommendationRepo)
+	secureCookie := strings.EqualFold(cfg.Environment, "production")
 
-	webHandler := web.NewHandler(userService)
-	apiHandler := api.NewHandler(userService)
+	webHandler := web.NewHandler(userService, authService, secureCookie)
+	apiHandler := api.NewHandler(
+		userService,
+		authService,
+		questionnaireService,
+		recommendationService,
+		vehicleService,
+		secureCookie,
+	)
 	adminHandler := admin.NewHandler(userService)
 	healthHandler := health.NewHandler(db.GetDB())
 
@@ -63,7 +80,42 @@ func main() {
 
 	r.Route("/api/user", func(r chi.Router) {
 		r.Use(api.JSONMiddleware)
-		r.Get("/", api.RequireAuth(http.HandlerFunc(apiHandler.Placeholder)))
+		r.Handle("/", api.RequireAuth(authService, http.HandlerFunc(apiHandler.Placeholder)))
+	})
+
+	r.Route("/api", func(r chi.Router) {
+		r.Use(api.JSONMiddleware)
+
+		r.With(func(next http.Handler) http.Handler {
+			return api.RequireAuth(authService, next)
+		}).Get("/questions", apiHandler.Questions)
+
+		r.Route("/questions", func(r chi.Router) {
+			r.Use(func(next http.Handler) http.Handler {
+				return api.RequireAuth(authService, next)
+			})
+			r.Get("/", apiHandler.Questions)
+		})
+
+		r.With(func(next http.Handler) http.Handler {
+			return api.RequireAuth(authService, next)
+		}).Get("/recommendations", apiHandler.RecommendationHistory)
+
+		r.Route("/recommendations", func(r chi.Router) {
+			r.Use(func(next http.Handler) http.Handler {
+				return api.RequireAuth(authService, next)
+			})
+			r.Post("/generate", apiHandler.GenerateRecommendations)
+			r.Get("/", apiHandler.RecommendationHistory)
+			r.Get("/{id}", apiHandler.RecommendationDetails)
+		})
+
+		r.Get("/vehicles", apiHandler.Vehicles)
+
+		r.Route("/vehicles", func(r chi.Router) {
+			r.Get("/", apiHandler.Vehicles)
+			r.Get("/{id}", apiHandler.VehicleDetails)
+		})
 	})
 
 	r.Route("/api/admin", func(r chi.Router) {

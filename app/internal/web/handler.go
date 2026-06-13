@@ -1,13 +1,32 @@
 package web
 
-import "carro-ideal/app/service"
+import (
+	"net/http"
+
+	"carro-ideal/app/internal/auth"
+	"carro-ideal/app/service"
+)
 
 type Handler struct {
-	UserService *service.UserService
+	UserService  *service.UserService
+	AuthService  *service.AuthService
+	SecureCookie bool
 }
 
-func NewHandler(userService *service.UserService) *Handler {
+func NewHandler(userService *service.UserService, authService *service.AuthService, secureCookie bool) *Handler {
 	return &Handler{
-		UserService: userService,
+		UserService:  userService,
+		AuthService:  authService,
+		SecureCookie: secureCookie,
 	}
+}
+
+func (h *Handler) authenticated(r *http.Request) bool {
+	token, ok := auth.SessionToken(r)
+	if !ok {
+		return false
+	}
+
+	_, err := h.AuthService.Authenticate(r.Context(), token)
+	return err == nil
 }

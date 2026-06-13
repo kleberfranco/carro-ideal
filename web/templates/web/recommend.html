@@ -1,4 +1,65 @@
 {{ define "content" }}
-<h1>Recomendação</h1>
-<p>Aqui você verá as recomendações de carros com base no seu perfil.</p>
+<section class="hero-panel mb-4">
+    <p class="eyebrow">Seu próximo carro começa aqui</p>
+    <h1 class="text-start">Encontre opções que combinam com a sua rotina</h1>
+    <p class="lead mb-0">Responda cinco perguntas. O Carro Ideal compara seu perfil com o catálogo e explica cada resultado.</p>
+</section>
+
+<ul class="nav nav-pills mb-4" id="recommend-tabs">
+    <li class="nav-item">
+        <button class="nav-link active" data-view="questionnaire">Questionário</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-view="results">Resultado</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-view="history">Histórico</button>
+    </li>
+</ul>
+
+<div id="recommend-alert" class="alert d-none" role="alert"></div>
+
+<section id="questionnaire-view">
+    <div id="questionnaire-loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Carregando perguntas...</p>
+    </div>
+    <form id="questionnaire-form" class="d-none">
+        <div id="questions-list"></div>
+        <button id="generate-submit" class="btn btn-primary btn-lg w-100" type="submit">
+            Gerar minhas recomendações
+        </button>
+    </form>
+</section>
+
+<section id="results-view" class="d-none">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <p class="eyebrow mb-1">Compatibilidade calculada</p>
+            <h2 class="text-start mb-0">Seus carros recomendados</h2>
+        </div>
+        <button class="btn btn-outline-primary w-auto" data-view="questionnaire">Refazer</button>
+    </div>
+    <div id="recommendation-results" class="row g-3"></div>
+</section>
+
+<section id="history-view" class="d-none">
+    <p class="eyebrow mb-1">Suas pesquisas</p>
+    <h2 class="text-start mb-4">Histórico de recomendações</h2>
+    <div id="history-list"></div>
+</section>
+
+<div class="modal fade" id="vehicle-modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title fs-4" id="vehicle-modal-title">Detalhes do veículo</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body" id="vehicle-modal-body"></div>
+        </div>
+    </div>
+</div>
+
+<script src="/static/js/web/recommend.js"></script>
 {{ end }}

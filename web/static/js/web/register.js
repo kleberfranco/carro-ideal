@@ -39,17 +39,19 @@ $(function () {
             contentType: "application/json",
             data: JSON.stringify(payload)
         })
-            .done(function (_, _textStatus, jqXHR) {
+            .done(function (data, _textStatus, jqXHR) {
                 if (jqXHR.status === 201) {
                     form.find("input").addClass("is-valid");
 
                     alertBox
                         .addClass("alert alert-success")
-                        .text("Conta criada com sucesso! Você já pode entrar.")
+                        .text("Conta criada e sessão iniciada com sucesso!")
                         .show();
 
+                    localStorage.setItem("user", JSON.stringify(data.data.user));
+
                     setTimeout(function () {
-                        window.location.href = "/login";
+                        window.location.href = "/recommend";
                     }, 1200);
                 }
             })

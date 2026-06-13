@@ -47,10 +47,10 @@ $(function () {
                         .show();
 
                     // Armazenar dados do usuário no localStorage
-                    localStorage.setItem("user", JSON.stringify(data.user));
+                    localStorage.setItem("user", JSON.stringify(data.data.user));
 
                     setTimeout(function () {
-                        window.location.href = "/";
+                        window.location.href = "/recommend";
                     }, 1200);
                 }
             })
@@ -105,4 +105,3 @@ $(function () {
             });
     });
 });
-

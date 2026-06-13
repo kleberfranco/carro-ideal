@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"carro-ideal/app/internal/auth"
+	"carro-ideal/app/internal/response"
+	"carro-ideal/app/service"
 )
 
 type contextKey string
@@ -18,14 +20,17 @@ func JSONMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func RequireAuth(next http.Handler) http.Handler {
+func RequireAuth(authService *service.AuthService, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userID, ok := auth.GetUserID(r)
+		token, ok := auth.SessionToken(r)
 		if !ok {
-			nextw := w
-			nextw.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusUnauthorized)
-			_, _ = w.Write([]byte(`{"success":false,"error":"unauthorized","code":"UNAUTHORIZED"}`))
+			response.Error(w, http.StatusUnauthorized, "autenticação necessária", "UNAUTHENTICATED")
+			return
+		}
+
+		userID, err := authService.Authenticate(r.Context(), token)
+		if err != nil {
+			response.Error(w, http.StatusUnauthorized, "sessão inválida ou expirada", "UNAUTHENTICATED")
 			return
 		}
 

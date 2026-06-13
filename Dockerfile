@@ -1,6 +1,8 @@
 FROM golang:1.22-alpine AS builder
 WORKDIR /app
 
+RUN apk add --no-cache git
+
 COPY go.mod go.sum ./
 RUN go mod download
 
@@ -13,7 +15,7 @@ WORKDIR /app
 
 COPY --from=builder /app/server .
 COPY --from=builder /app/web ./web
-COPY --from=builder /app/.env.example .
+COPY --from=builder /app/migrations ./migrations
 
 EXPOSE 8080
 

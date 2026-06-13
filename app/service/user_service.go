@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"errors"
+	"net/mail"
+	"strings"
 
 	"carro-ideal/app/models"
 	"carro-ideal/app/repository"
@@ -24,27 +26,38 @@ func NewUserService(repo repository.UserRepository) *UserService {
 	}
 }
 
-func (s *UserService) Register(ctx context.Context, name, email, password, confirmPassword string) error {
+func (s *UserService) Register(ctx context.Context, name, email, password, confirmPassword string) (*models.User, error) {
+	name = strings.TrimSpace(name)
+	email = strings.ToLower(strings.TrimSpace(email))
+
 	if name == "" || email == "" || password == "" || confirmPassword == "" {
-		return errors.New("todos os campos são obrigatórios")
+		return nil, errors.New("todos os campos são obrigatórios")
+	}
+
+	if _, err := mail.ParseAddress(email); err != nil {
+		return nil, errors.New("email inválido")
 	}
 
 	if password != confirmPassword {
-		return errors.New("as senhas não conferem")
+		return nil, errors.New("as senhas não conferem")
+	}
+
+	if len(password) < 8 {
+		return nil, errors.New("a senha deve ter pelo menos 8 caracteres")
 	}
 
 	exists, err := s.repo.ExistsByEmail(ctx, email)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if exists {
-		return ErrEmailAlreadyUsed
+		return nil, ErrEmailAlreadyUsed
 	}
 
 	hashed, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user := &models.User{
@@ -56,13 +69,14 @@ func (s *UserService) Register(ctx context.Context, name, email, password, confi
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return user, nil
 }
 
 func (s *UserService) Login(ctx context.Context, email, password string) (*models.User, error) {
+	email = strings.ToLower(strings.TrimSpace(email))
 	if email == "" || password == "" {
 		return nil, errors.New("email e senha são obrigatórios")
 	}

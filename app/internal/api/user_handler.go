@@ -3,13 +3,19 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+	"net/mail"
+	"strings"
 
 	"carro-ideal/app/internal/auth"
+	"carro-ideal/app/internal/response"
+	"carro-ideal/app/models"
 	"carro-ideal/app/service"
 )
 
 type UserHandler struct {
-	userService *service.UserService
+	userService  *service.UserService
+	authService  *service.AuthService
+	secureCookie bool
 }
 
 type registerRequest struct {
@@ -27,59 +33,53 @@ type loginRequest struct {
 func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{
-			"error": "payload inválido",
-		})
+		response.Error(w, http.StatusBadRequest, "payload inválido", "INVALID_INPUT")
 		return
 	}
 
 	errors := map[string]string{}
 
+	req.Name = strings.TrimSpace(req.Name)
+	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
+
 	if req.Name == "" {
 		errors["name"] = "Informe seu nome completo."
 	}
-	if req.Email == "" {
+	if _, err := mail.ParseAddress(req.Email); err != nil {
 		errors["email"] = "Informe um e-mail válido."
 	}
-	if len(req.Password) < 6 {
-		errors["password"] = "A senha deve ter pelo menos 6 caracteres."
+	if len(req.Password) < 8 {
+		errors["password"] = "A senha deve ter pelo menos 8 caracteres."
 	}
 	if req.Password != req.ConfirmPassword {
 		errors["confirm_password"] = "As senhas não conferem."
 	}
 
 	if len(errors) > 0 {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]map[string]string{
-			"errors": errors,
-		})
+		response.ValidationError(w, errors)
 		return
 	}
 
-	err := h.userService.Register(r.Context(), req.Name, req.Email, req.Password, req.ConfirmPassword)
+	user, err := h.userService.Register(r.Context(), req.Name, req.Email, req.Password, req.ConfirmPassword)
 	if err != nil {
 		if service.IsEmailAlreadyUsed(err) {
-			writeJSON(w, http.StatusConflict, map[string]string{
-				"error": "Este e-mail já está em uso.",
-			})
+			response.Error(w, http.StatusConflict, "Este e-mail já está em uso.", "EMAIL_EXISTS")
 			return
 		}
 
-		writeJSON(w, http.StatusInternalServerError, map[string]string{
-			"error": "Erro ao cadastrar usuário.",
-		})
+		response.Error(w, http.StatusInternalServerError, "Erro ao cadastrar usuário.", "INTERNAL_ERROR")
 		return
 	}
 
-	user, err := h.userService.Login(r.Context(), req.Email, req.Password)
+	token, expiresAt, err := h.authService.CreateSession(r.Context(), user.ID)
 	if err != nil {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{
-			"error": "Usuário criado, mas houve falha no login automático.",
-		})
+		response.Error(w, http.StatusInternalServerError, "Usuário criado, mas houve falha ao iniciar a sessão.", "SESSION_ERROR")
 		return
 	}
 
-	auth.SetUserSession(w, user.ID)
-	writeJSON(w, http.StatusCreated, map[string]string{
+	auth.SetSessionCookie(w, token, expiresAt, h.secureCookie)
+	response.JSON(w, http.StatusCreated, map[string]interface{}{
+		"user":    userResponse(user),
 		"message": "Usuário registrado e autenticado com sucesso.",
 	})
 }
@@ -87,9 +87,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{
-			"error": "payload inválido",
-		})
+		response.Error(w, http.StatusBadRequest, "payload inválido", "INVALID_INPUT")
 		return
 	}
 
@@ -103,71 +101,73 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(errors) > 0 {
-		writeJSON(w, http.StatusUnprocessableEntity, map[string]map[string]string{
-			"errors": errors,
-		})
+		response.ValidationError(w, errors)
 		return
 	}
 
 	user, err := h.userService.Login(r.Context(), req.Email, req.Password)
 	if err != nil {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{
-			"error": err.Error(),
-		})
+		response.Error(w, http.StatusUnauthorized, err.Error(), "AUTH_FAILED")
 		return
 	}
 
-	auth.SetUserSession(w, user.ID)
-	writeJSON(w, http.StatusOK, map[string]interface{}{
+	token, expiresAt, err := h.authService.CreateSession(r.Context(), user.ID)
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Falha ao iniciar a sessão.", "SESSION_ERROR")
+		return
+	}
+
+	auth.SetSessionCookie(w, token, expiresAt, h.secureCookie)
+	response.JSON(w, http.StatusOK, map[string]interface{}{
 		"message": "Login realizado com sucesso.",
-		"user": map[string]interface{}{
-			"id":    user.ID,
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
-		},
+		"user":    userResponse(user),
 	})
 }
 
 func (h *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	auth.ClearUserSession(w)
-	writeJSON(w, http.StatusOK, map[string]string{
+	if token, ok := auth.SessionToken(r); ok {
+		if err := h.authService.DestroySession(r.Context(), token); err != nil {
+			response.Error(w, http.StatusInternalServerError, "Falha ao encerrar a sessão.", "SESSION_ERROR")
+			return
+		}
+	}
+
+	auth.ClearSessionCookie(w, h.secureCookie)
+	response.JSON(w, http.StatusOK, map[string]string{
 		"message": "Logout realizado com sucesso.",
 	})
 }
 
 func (h *UserHandler) Me(w http.ResponseWriter, r *http.Request) {
-	userID, ok := auth.GetUserID(r)
+	token, ok := auth.SessionToken(r)
 	if !ok {
-		writeJSON(w, http.StatusUnauthorized, map[string]string{
-			"error": "usuário não autenticado",
-		})
+		response.Error(w, http.StatusUnauthorized, "usuário não autenticado", "UNAUTHENTICATED")
+		return
+	}
+
+	userID, err := h.authService.Authenticate(r.Context(), token)
+	if err != nil {
+		response.Error(w, http.StatusUnauthorized, "sessão inválida ou expirada", "UNAUTHENTICATED")
 		return
 	}
 
 	user, err := h.userService.GetByID(r.Context(), userID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{
-			"error": "Falha ao buscar dados do usuário.",
-		})
+		response.Error(w, http.StatusInternalServerError, "Falha ao buscar dados do usuário.", "INTERNAL_ERROR")
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
-		"user": map[string]interface{}{
-			"id":    user.ID,
-			"name":  user.Name,
-			"email": user.Email,
-			"role":  user.Role,
-			"active": user.Active,
-		},
+	response.JSON(w, http.StatusOK, map[string]interface{}{
+		"user": userResponse(user),
 	})
 }
 
-func writeJSON(w http.ResponseWriter, status int, body interface{}) {
-	w.WriteHeader(status)
-	if body == nil {
-		return
+func userResponse(user *models.User) map[string]interface{} {
+	return map[string]interface{}{
+		"id":     user.ID,
+		"name":   user.Name,
+		"email":  user.Email,
+		"role":   user.Role,
+		"active": user.Active,
 	}
-	_ = json.NewEncoder(w).Encode(body)
 }
