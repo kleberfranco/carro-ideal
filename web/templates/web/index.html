@@ -5,7 +5,9 @@
     <p class="lead">Responda algumas perguntas sobre sua rotina e orçamento. Nossa IA analisa seu perfil e indica os modelos mais compatíveis do catálogo.</p>
     <div class="hero-cta">
         <a href="/recommend" class="btn btn-primary btn-lg">Começar agora</a>
+        {{ if not .IsLoggedIn }}
         <a href="/register" class="btn btn-outline-secondary btn-lg">Criar conta grátis</a>
+        {{ end }}
     </div>
 </div>
 
