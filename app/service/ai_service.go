@@ -93,6 +93,9 @@ func buildPrompt(answers []models.SubmittedAnswer, questions []models.Question, 
 		if transmission != "" {
 			line += ", câmbio " + transmission
 		}
+		if v.Condition != "" {
+			line += ", " + v.Condition
+		}
 		sb.WriteString(line + "\n")
 		if v.Description != "" {
 			sb.WriteString("  " + v.Description + "\n")

@@ -18,6 +18,7 @@ type Vehicle struct {
 	Model               string             `json:"model"`
 	Version             string             `json:"version"`
 	Year                int                `json:"year"`
+	Condition           string             `json:"condition"`
 	FuelType            string             `json:"fuel_type"`
 	Transmission        string             `json:"transmission"`
 	PriceMin            float64            `json:"price_min"`
@@ -42,6 +43,7 @@ type VehicleInput struct {
 	Model              *string            `json:"model"`
 	Version            *string            `json:"version"`
 	Year               *int               `json:"year"`
+	Condition          *string            `json:"condition"`
 	FuelType           *string            `json:"fuel_type"`
 	Transmission       *string            `json:"transmission"`
 	PriceMin           *float64           `json:"price_min"`

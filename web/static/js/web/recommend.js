@@ -90,6 +90,16 @@ $(function () {
         });
     }
 
+    function conditionBadge(condition) {
+        if (condition === "seminovo") {
+            return '<span class="condition-badge condition-used">Seminovo</span>';
+        }
+        if (condition === "novo") {
+            return '<span class="condition-badge condition-new">Novo</span>';
+        }
+        return "";
+    }
+
     // ── Load questionnaire ────────────────────────────────────
     function loadQuestions() {
         $.getJSON("/api/questions/")
@@ -158,7 +168,7 @@ $(function () {
                         <div class="vehicle-main">
                             <div class="d-flex flex-wrap justify-content-between gap-2 align-items-start">
                                 <div>
-                                    <p class="vehicle-category">${escapeHtml(vehicle.category.name)}</p>
+                                    <p class="vehicle-category">${escapeHtml(vehicle.category.name)} ${conditionBadge(vehicle.condition)}</p>
                                     <h3>${escapeHtml(vehicle.brand)} ${escapeHtml(vehicle.model)}</h3>
                                     <p class="text-secondary mb-2" style="font-size:.875rem">${escapeHtml(vehicle.version)} · ${vehicle.year}</p>
                                 </div>

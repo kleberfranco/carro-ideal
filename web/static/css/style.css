@@ -443,6 +443,29 @@ h1, h2, h3, h4 {
     background: var(--primary-pale);
 }
 
+/* ── Condition badge ─────────────────────────────────────────── */
+.condition-badge {
+    display: inline-block;
+    margin-left: .4rem;
+    padding: .1rem .5rem;
+    border-radius: 999px;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    vertical-align: middle;
+}
+
+.condition-new {
+    background: var(--primary-pale);
+    color: var(--primary-dark);
+}
+
+.condition-used {
+    background: var(--accent-pale);
+    color: var(--accent-dark);
+}
+
 /* ── Vehicle cards ───────────────────────────────────────────── */
 .vehicle-card {
     display: flex;

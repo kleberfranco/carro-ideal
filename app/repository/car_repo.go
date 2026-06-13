@@ -26,7 +26,8 @@ func NewVehicleRepository(db *sql.DB) VehicleRepository {
 
 const vehicleColumns = `
 	v.id, v.category_id, c.id, c.name, COALESCE(c.description, ''), c.active,
-	v.brand, v.model, COALESCE(v.version, ''), v.year, v.fuel_type, v.transmission,
+	v.brand, v.model, COALESCE(v.version, ''), v.year, COALESCE(v.condition, 'novo'),
+	v.fuel_type, v.transmission,
 	v.price_min, v.price_max, COALESCE(v.seats, 0), COALESCE(v.trunk_capacity, 0),
 	COALESCE(v.consumption_city, 0), COALESCE(v.consumption_highway, 0),
 	COALESCE(v.description, ''), COALESCE(v.strengths, ''), COALESCE(v.weaknesses, ''),
@@ -83,7 +84,7 @@ func scanVehicle(scanner rowScanner) (*models.Vehicle, error) {
 	err := scanner.Scan(
 		&vehicle.ID, &vehicle.CategoryID, &vehicle.Category.ID, &vehicle.Category.Name,
 		&vehicle.Category.Description, &vehicle.Category.Active, &vehicle.Brand, &vehicle.Model, &vehicle.Version,
-		&vehicle.Year, &vehicle.FuelType, &vehicle.Transmission, &vehicle.PriceMin,
+		&vehicle.Year, &vehicle.Condition, &vehicle.FuelType, &vehicle.Transmission, &vehicle.PriceMin,
 		&vehicle.PriceMax, &vehicle.Seats, &vehicle.TrunkCapacity, &vehicle.ConsumptionCity,
 		&vehicle.ConsumptionHighway, &vehicle.Description, &vehicle.Strengths,
 		&vehicle.Weaknesses, &profile, &vehicle.Active, &vehicle.CreatedAt, &vehicle.UpdatedAt,
