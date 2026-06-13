@@ -93,7 +93,7 @@ func (r *AdminRepository) Vehicles(ctx context.Context, search string, limit, of
 		err := rows.Scan(
 			&vehicle.ID, &vehicle.CategoryID, &vehicle.Category.ID, &vehicle.Category.Name,
 			&vehicle.Category.Description, &vehicle.Category.Active, &vehicle.Brand, &vehicle.Model, &vehicle.Version,
-			&vehicle.Year, &vehicle.FuelType, &vehicle.Transmission, &vehicle.PriceMin,
+			&vehicle.Year, &vehicle.Condition, &vehicle.FuelType, &vehicle.Transmission, &vehicle.PriceMin,
 			&vehicle.PriceMax, &vehicle.Seats, &vehicle.TrunkCapacity, &vehicle.ConsumptionCity,
 			&vehicle.ConsumptionHighway, &vehicle.Description, &vehicle.Strengths,
 			&vehicle.Weaknesses, &profile, &vehicle.Active, &vehicle.CreatedAt, &vehicle.UpdatedAt,
