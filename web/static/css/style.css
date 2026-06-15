@@ -753,6 +753,16 @@ h1, h2, h3, h4 {
     color: var(--muted);
 }
 
+.stat-card--link {
+    cursor: pointer;
+    transition: border-color .18s, box-shadow .18s;
+}
+
+.stat-card--link:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-pale);
+}
+
 .admin-question-card {
     margin-bottom: 1rem;
     padding: 1.25rem;

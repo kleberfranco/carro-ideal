@@ -87,14 +87,16 @@ $(function () {
         request({url: "/api/admin/dashboard"}).done(function (response) {
             const stats = response.data;
             const cards = [
-                ["Usuários", stats.users],
-                ["Veículos", stats.vehicles],
-                ["Recomendações", stats.recommendations],
-                ["Perguntas", stats.questions],
-                ["Usuários ativos (7 dias)", stats.active_users_week],
-                ["Novos usuários (7 dias)", stats.new_users_week]
+                ["Usuários", stats.users, "users"],
+                ["Veículos", stats.vehicles, "vehicles"],
+                ["Recomendações", stats.recommendations, null],
+                ["Perguntas", stats.questions, "questions"],
+                ["Usuários ativos (7 dias)", stats.active_users_week, "users"],
+                ["Novos usuários (7 dias)", stats.new_users_week, "users"]
             ].map(function (item) {
-                return `<div class="col-lg-4 col-6"><article class="stat-card"><strong>${item[1]}</strong><span>${item[0]}</span></article></div>`;
+                const nav = item[2] ? ` data-admin-nav="${item[2]}"` : "";
+                const cls = item[2] ? " stat-card--link" : "";
+                return `<div class="col-lg-4 col-6"><article class="stat-card${cls}"${nav}><strong>${item[1]}</strong><span>${item[0]}</span></article></div>`;
             }).join("");
             $("#admin-stats").html(cards);
         });
@@ -194,6 +196,10 @@ $(function () {
 
     $("#admin-tabs").on("click", "[data-admin-view]", function () {
         showView($(this).data("admin-view"));
+    });
+
+    $("#admin-stats").on("click", "[data-admin-nav]", function () {
+        showView($(this).data("admin-nav"));
     });
 
     let vehicleSearchTimer;
