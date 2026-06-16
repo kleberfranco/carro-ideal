@@ -1,6 +1,8 @@
 # Carro Ideal
 
-Aplicação web em Go que recomenda veículos a partir das preferências do usuário. O projeto é desenvolvido como TCC com arquitetura em camadas, PostgreSQL, API REST, templates server-side e execução via Docker.
+Aplicação web em Go que recomenda veículos a partir das preferências do usuário. O projeto é desenvolvido como TCC com arquitetura em camadas, PostgreSQL, API REST, templates server-side e motor de recomendação alimentado por ChatGPT (com fallback para algoritmo de scoring). Execução via Docker.
+
+**Stack principal**: Go 1.25 · PostgreSQL 15 · Bootstrap 5 · jQuery · OpenAI API (gpt-4o-mini)
 
 ## Estado atual — MVP Completo ✅
 
@@ -10,19 +12,19 @@ Todas as 6 fases do planejamento foram concluídas:
 |------|--------|--------|
 | 1 — Fundação | Docker, PostgreSQL, roteamento, health check | ✅ Concluído |
 | 2 — Autenticação | Registro, login, sessões, middleware | ✅ Concluído |
-| 3 — Motor de recomendação | Questionário ponderado, algoritmo de scoring, histórico | ✅ Concluído |
+| 3 — Motor de recomendação | Questionário ponderado, algoritmo de scoring, integração ChatGPT com fallback automático, histórico | ✅ Concluído |
 | 4 — Painel Admin | CRUD de veículos, categorias, perguntas e opções | ✅ Concluído |
-| 5 — Polimento | Segurança, cache, observabilidade, dark mode | ✅ Concluído |
+| 5 — Polimento | Segurança, cache, observabilidade, UI responsiva (Bootstrap 5 + jQuery) | ✅ Concluído |
 | 6 — QA e Docs | Testes unitários (87% cobertura), API contract, E2E, documentação final | ✅ Concluído |
 
 **Funcionalidades entregues**:
 - Registro e login com sessões seguras (bcrypt + SHA-256 + HttpOnly cookie)
-- Questionário ponderado com cálculo de perfil de preferências
-- Algoritmo de recomendação por score de compatibilidade, top-10 ranqueado
+- Questionário guiado (one-question-at-a-time) com cálculo de perfil de preferências
+- Motor de IA: ChatGPT analisa respostas + catálogo e retorna ranking justificado; fallback automático para algoritmo de scoring quando a API está indisponível
+- Catálogo com 33 veículos (novos e seminovos), gerenciável pelo painel admin
 - Histórico de recomendações por usuário
-- Painel administrativo com dashboard e CRUD completo
+- Painel administrativo com dashboard, CRUD completo de veículos/categorias/perguntas e listagem de usuários
 - Logs JSON estruturados, request ID, recuperação de panics, CORS, rate limit, CSRF
-- Comparação de veículos lado a lado, dark mode persistente, skeleton loading
 - Cache TTL para catálogo (veículos e perguntas), paginação otimizada
 
 O planejamento detalhado está em [tasks.md](tasks.md) e os artefatos do Spec Kit estão em `specs/001-carro-ideal-mvp/`.
@@ -122,6 +124,7 @@ Para resultados de QA manual e testes de segurança, veja [docs/qa-manual.md](do
 | GET | `/api/vehicles` | Lista o catálogo ativo |
 | GET | `/api/vehicles/{id}` | Retorna detalhes do veículo |
 | GET | `/api/admin/dashboard` | Métricas administrativas |
+| GET | `/api/admin/users` | Listagem de usuários |
 | CRUD | `/api/admin/vehicles` | Gestão do catálogo |
 | CRUD | `/api/admin/categories` | Gestão de categorias |
 | CRUD | `/api/admin/questions` | Gestão de perguntas e opções |
@@ -177,6 +180,9 @@ Variáveis disponíveis em `.env.example`:
 - `RATE_LIMIT_REQUESTS`, `RATE_LIMIT_WINDOW_SECONDS`
 - `CACHE_TTL_SECONDS`
 - `TLS_CERT_FILE`, `TLS_KEY_FILE`
+- `OPENAI_API_KEY` — chave da API OpenAI; se ausente, o motor de IA é desativado e o scoring assume
+- `OPENAI_MODEL` (padrão: `gpt-4o-mini`)
+- `OPENAI_TIMEOUT_SECONDS` (padrão: `15`)
 
 Em produção, cookies de sessão recebem também a flag `Secure`.
 
